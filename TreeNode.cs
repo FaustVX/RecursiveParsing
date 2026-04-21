@@ -1,12 +1,24 @@
 using System.Collections.Frozen;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RecursiveParsing;
 
 public abstract class TreeNode
 {
+    private static readonly Dictionary<int, string> _indent = [];
     public abstract void Print(StringBuilder sb);
     public abstract decimal Evaluate(Context ctx);
+    public abstract void PrintTree(int indentation = 0);
+    protected string IndentSpaces(int depth)
+    {
+        ref var indent = ref CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
+        if (exists)
+            return indent!;
+        var s = (stackalloc char[depth * 2]);
+        s.Fill(' ');
+        return indent = new string(s);
+    }
 }
 
 public class Context(params IEnumerable<KeyValuePair<string, decimal>> variables)
@@ -23,6 +35,9 @@ public sealed class Number(decimal i) : TreeNode
 
     public override void Print(StringBuilder sb)
     => sb.Append(I);
+
+    public override void PrintTree(int indentation)
+    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}: {I}");
 }
 
 public sealed class Id(string name) : TreeNode
@@ -34,11 +49,20 @@ public sealed class Id(string name) : TreeNode
 
     public override void Print(StringBuilder sb)
     => sb.Append(Name);
+
+    public override void PrintTree(int indentation)
+    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}: {Name}");
 }
 
 public abstract class UnaryNode(TreeNode node) : TreeNode
 {
     public TreeNode Node { get; } = node;
+
+    public override void PrintTree(int indentation)
+    {
+        Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}:");
+        Node.PrintTree(indentation + 1);
+    }
 }
 
 public sealed class Negate(TreeNode node) : UnaryNode(node)
@@ -76,6 +100,13 @@ public abstract class BinaryNode(TreeNode left, TreeNode right) : TreeNode
 {
     public TreeNode Left { get; } = left;
     public TreeNode Right { get; } = right;
+
+    public override void PrintTree(int indentation)
+    {
+        Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}:");
+        Left.PrintTree(indentation + 1);
+        Right.PrintTree(indentation + 1);
+    }
 }
 
 public sealed class Add(TreeNode left, TreeNode right) : BinaryNode(left, right)
