@@ -3,11 +3,13 @@ namespace RecursiveParsing;
 public class Parser()
 {
     /// <summary>
-    /// • E -> T { (+ | -) T}*
+    /// • expression  := term (("+" | "-") term)*
     /// <br/>
-    /// • T -> F { (* | /) F}*
+    /// • term        := unary (("*" | "/") unary)*
     /// <br/>
-    /// • F -> ID | Int | (E) | -F | +F
+    /// • unary       := ("+" | "-") unary | primary
+    /// <br/>
+    /// • primary     := ID | NUMBER | "(" expression ")"
     /// </summary>
     public TreeNode? Parse(string input)
     {
@@ -20,7 +22,7 @@ public class Parser()
     }
 
     /// <summary>
-    /// E -> T { (+ | -) T}*
+    /// expression := term (("+" | "-") term)*
     /// </summary>
     private TreeNode? ParseExpression(ref Tokenizer tokenizer)
     {
@@ -54,11 +56,11 @@ public class Parser()
     }
 
     /// <summary>
-    /// T -> F { (* | /) F}*
+    /// term := unary (("*" | "/") unary)*
     /// </summary>
     private TreeNode? ParseTerm(ref Tokenizer tokenizer)
     {
-        var tree = ParseFactor(ref tokenizer);
+        var tree = ParseUnary(ref tokenizer);
         if (tree is null)
             return null;
         while (true)
@@ -67,7 +69,7 @@ public class Parser()
                 case Token.Symbol { Value: '*' }:
                 {
                     tokenizer.ScanToken();
-                    var right = ParseFactor(ref tokenizer);
+                    var right = ParseUnary(ref tokenizer);
                     if (right is null)
                         return null;
                     tree = new Multiply(tree, right);
@@ -76,7 +78,7 @@ public class Parser()
                 case Token.Symbol { Value: '/' }:
                 {
                     tokenizer.ScanToken();
-                    var right = ParseFactor(ref tokenizer);
+                    var right = ParseUnary(ref tokenizer);
                     if (right is null)
                         return null;
                     tree = new Divide(tree, right);
@@ -91,9 +93,9 @@ public class Parser()
     }
 
     /// <summary>
-    /// F -> ID | Int | (E) | -F | +F
+    /// primary := ID | NUMBER | "(" expression ")"
     /// </summary>
-    private TreeNode? ParseFactor(ref Tokenizer tokenizer)
+    private TreeNode? ParsePrimary(ref Tokenizer tokenizer)
     {
         switch (tokenizer.NextToken)
         {
@@ -112,10 +114,22 @@ public class Parser()
                     return null;
                 tokenizer.ScanToken();
                 return tree;
+            default:
+                return null;
+        };
+    }
+
+    /// <summary>
+    /// unary := ("+" | "-") unary | primary
+    /// </summary>
+    private TreeNode? ParseUnary(ref Tokenizer tokenizer)
+    {
+        switch (tokenizer.NextToken)
+        {
             case Token.Symbol { Value: '-' }:
             {
                 tokenizer.ScanToken();
-                var node = ParseFactor(ref tokenizer);
+                var node = ParseUnary(ref tokenizer);
                 if (node is null)
                     return null;
                 return new Negate(node);
@@ -123,11 +137,11 @@ public class Parser()
             case Token.Symbol { Value: '+' }:
             {
                 tokenizer.ScanToken();
-                var node = ParseFactor(ref tokenizer);
+                var node = ParseUnary(ref tokenizer);
                     return node;
             }
             default:
-                return null;
+                return ParsePrimary(ref tokenizer);
         };
     }
 }

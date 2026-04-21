@@ -3,13 +3,6 @@ using RecursiveParsing;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 
-var tokenizer = new Tokenizer("-3 + 2 * 4");
-do
-{
-    tokenizer.ScanToken();
-    Console.WriteLine(tokenizer.NextToken!.Value.Value);
-} while (tokenizer.NextToken is not (null or Token.EOL));
-
 var parser = new Parser();
 var treeNode = parser.Parse("-3 + 2 * 4");
 if (treeNode is null)
