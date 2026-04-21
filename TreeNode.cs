@@ -118,3 +118,18 @@ public sealed class Divide(TreeNode left, TreeNode right) : BinaryNode(left, rig
         sb.Append(')');
     }
 }
+
+public sealed class Power(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => (decimal)double.Pow((double)Left.Evaluate(ctx), (double)Right.Evaluate(ctx));
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append('^');
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}

@@ -7,7 +7,9 @@ public class Parser()
     /// <br/>
     /// • term        := unary (("*" | "/") unary)*
     /// <br/>
-    /// • unary       := ("+" | "-") unary | primary
+    /// • unary       := ("+" | "-") unary | exponentiation
+    /// <br/>
+    /// • exponentiation := primary ("^" exponentiation)?
     /// <br/>
     /// • primary     := ID | NUMBER | "(" expression ")"
     /// </summary>
@@ -93,7 +95,7 @@ public class Parser()
     }
 
     /// <summary>
-    /// unary := ("+" | "-") unary | primary
+    /// unary := ("+" | "-") unary | exponentiation
     /// </summary>
     private TreeNode? ParseUnary(ref Tokenizer tokenizer)
     {
@@ -114,8 +116,31 @@ public class Parser()
                     return node;
             }
             default:
-                return ParsePrimary(ref tokenizer);
+                return ParseExponentiation(ref tokenizer);
         };
+    }
+
+    /// <summary>
+    /// exponentiation := primary ("^" exponentiation)?
+    /// </summary>
+    private TreeNode? ParseExponentiation(ref Tokenizer tokenizer)
+    {
+        var tree = ParsePrimary(ref tokenizer);
+        if (tree is null)
+            return null;
+        switch (tokenizer.NextToken)
+        {
+            case Token.Symbol { Value: '^' }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseExponentiation(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new Power(tree, right);
+            }
+            default:
+                return tree;
+        }
     }
 
     /// <summary>

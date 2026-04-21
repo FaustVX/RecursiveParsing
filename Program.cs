@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 
 var parser = new Parser();
-var treeNode = parser.Parse("-3 + 2 * 4");
+var treeNode = parser.Parse("3^2^1");
 if (treeNode is null)
     return;
 var sb = new StringBuilder();
