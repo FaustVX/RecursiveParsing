@@ -3,7 +3,11 @@ namespace RecursiveParsing;
 public class Parser()
 {
     /// <summary>
-    /// • expression        := term (("+" | "-") term)*
+    /// • expression        := relational (("==" | "!=") relational)?
+    /// <br/>
+    /// • relational        := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?
+    /// <br/>
+    /// • additive          := term (("+" | "-") term)*
     /// <br/>
     /// • term              := unary (("*" | "/") unary)*
     /// <br/>
@@ -26,9 +30,87 @@ public class Parser()
     }
 
     /// <summary>
-    /// expression := term (("+" | "-") term)*
+    /// expression := relational (("==" | "!=") relational)?
     /// </summary>
     private TreeNode? ParseExpression(ref Tokenizer tokenizer)
+    {
+        var tree = ParseRelational(ref tokenizer);
+        if (tree is null)
+            return null;
+        switch (tokenizer.NextToken)
+        {
+            case Token.Symbol { Value: "==" }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseRelational(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new Equal(tree, right);
+            }
+            case Token.Symbol { Value: "!=" }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseRelational(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new NotEqual(tree, right);
+            }
+            default:
+                return tree;
+        }
+    }
+
+    /// <summary>
+    /// relational := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?
+    /// </summary>
+    private TreeNode? ParseRelational(ref Tokenizer tokenizer)
+    {
+        var tree = ParseAdditive(ref tokenizer);
+        if (tree is null)
+            return null;
+        switch (tokenizer.NextToken)
+        {
+            case Token.Symbol { Value: '<' }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseAdditive(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new LessThan(tree, right);
+            }
+            case Token.Symbol { Value: "<=" }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseAdditive(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new LessThanOrEqual(tree, right);
+            }
+            case Token.Symbol { Value: '>' }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseAdditive(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new GreaterThan(tree, right);
+            }
+            case Token.Symbol { Value: ">=" }:
+            {
+                tokenizer.ScanToken();
+                var right = ParseAdditive(ref tokenizer);
+                if (right is null)
+                    return null;
+                return new GreaterThanOrEqual(tree, right);
+            }
+            default:
+                return tree;
+        }
+    }
+
+    /// <summary>
+    /// additive := term (("+" | "-") term)*
+    /// </summary>
+    private TreeNode? ParseAdditive(ref Tokenizer tokenizer)
     {
         var tree = ParseTerm(ref tokenizer);
         if (tree is null)

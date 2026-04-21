@@ -17,7 +17,15 @@ public struct Tokenizer(string input)
             case ' ':
                 Input++;
                 return ScanTokenImpl();
-            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or '!') and var symbol:
+            case ('<' or '>' or '=' or '!') and var symbol:
+                Input++;
+                if (Input.First is '=' and var equals)
+                {
+                    Input++;
+                    return new Token.Symbol($"{symbol}{equals}");
+                }
+                return new Token.Symbol(symbol);
+            case ('+' or '-' or '*' or '/' or '^' or '(' or ')') and var symbol:
                 Input++;
                 return new Token.Symbol(symbol);
             case >= '0' and <= '9':

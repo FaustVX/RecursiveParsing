@@ -152,3 +152,93 @@ public sealed class Power(TreeNode left, TreeNode right) : BinaryNode(left, righ
         sb.Append(')');
     }
 }
+
+public sealed class Equal(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) == Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append("==");
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
+
+public sealed class NotEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) != Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append("!=");
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
+
+public sealed class LessThan(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) < Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append('<');
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
+
+public sealed class LessThanOrEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) <= Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append("<=");
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
+
+public sealed class GreaterThan(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) > Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append('>');
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
+
+public sealed class GreaterThanOrEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+{
+    public override decimal Evaluate(Context ctx)
+    => Left.Evaluate(ctx) >= Right.Evaluate(ctx) ? 1 : 0;
+
+    public override void Print(StringBuilder sb)
+    {
+        sb.Append('(');
+        Left.Print(sb);
+        sb.Append(">=");
+        Right.Print(sb);
+        sb.Append(')');
+    }
+}
