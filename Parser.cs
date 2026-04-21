@@ -93,6 +93,32 @@ public class Parser()
     }
 
     /// <summary>
+    /// unary := ("+" | "-") unary | primary
+    /// </summary>
+    private TreeNode? ParseUnary(ref Tokenizer tokenizer)
+    {
+        switch (tokenizer.NextToken)
+        {
+            case Token.Symbol { Value: '-' }:
+            {
+                tokenizer.ScanToken();
+                var node = ParseUnary(ref tokenizer);
+                if (node is null)
+                    return null;
+                return new Negate(node);
+            }
+            case Token.Symbol { Value: '+' }:
+            {
+                tokenizer.ScanToken();
+                var node = ParseUnary(ref tokenizer);
+                    return node;
+            }
+            default:
+                return ParsePrimary(ref tokenizer);
+        };
+    }
+
+    /// <summary>
     /// primary := ID | NUMBER | "(" expression ")"
     /// </summary>
     private TreeNode? ParsePrimary(ref Tokenizer tokenizer)
@@ -116,32 +142,6 @@ public class Parser()
                 return tree;
             default:
                 return null;
-        };
-    }
-
-    /// <summary>
-    /// unary := ("+" | "-") unary | primary
-    /// </summary>
-    private TreeNode? ParseUnary(ref Tokenizer tokenizer)
-    {
-        switch (tokenizer.NextToken)
-        {
-            case Token.Symbol { Value: '-' }:
-            {
-                tokenizer.ScanToken();
-                var node = ParseUnary(ref tokenizer);
-                if (node is null)
-                    return null;
-                return new Negate(node);
-            }
-            case Token.Symbol { Value: '+' }:
-            {
-                tokenizer.ScanToken();
-                var node = ParseUnary(ref tokenizer);
-                    return node;
-            }
-            default:
-                return ParsePrimary(ref tokenizer);
         };
     }
 }
