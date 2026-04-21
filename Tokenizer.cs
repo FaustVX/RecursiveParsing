@@ -1,6 +1,6 @@
 namespace RecursiveParsing;
 
-public struct Tokenizer(string input)
+public class Tokenizer(string input)
 {
     public Token? NextToken { get; private set; }
     public ReadOnlyMemory<char> Input { get; private set; } = input.AsMemory();
