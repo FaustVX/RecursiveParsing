@@ -3,15 +3,17 @@ namespace RecursiveParsing;
 public class Parser()
 {
     /// <summary>
-    /// • expression  := term (("+" | "-") term)*
+    /// • expression        := term (("+" | "-") term)*
     /// <br/>
-    /// • term        := unary (("*" | "/") unary)*
+    /// • term              := unary (("*" | "/") unary)*
     /// <br/>
-    /// • unary       := ("+" | "-") unary | exponentiation
+    /// • unary             := ("+" | "-") unary | exponentiation
     /// <br/>
-    /// • exponentiation := primary ("^" exponentiation)?
+    /// • exponentiation    := postfix ("^" exponentiation)?
     /// <br/>
-    /// • primary     := ID | NUMBER | "(" expression ")"
+    /// • postfix           := primary "!"*
+    /// <br/>
+    /// • primary           := ID | NUMBER | "(" expression ")"
     /// </summary>
     public TreeNode? Parse(string input)
     {
@@ -121,11 +123,11 @@ public class Parser()
     }
 
     /// <summary>
-    /// exponentiation := primary ("^" exponentiation)?
+    /// exponentiation := postfix ("^" exponentiation)?
     /// </summary>
     private TreeNode? ParseExponentiation(ref Tokenizer tokenizer)
     {
-        var tree = ParsePrimary(ref tokenizer);
+        var tree = ParsePostfix(ref tokenizer);
         if (tree is null)
             return null;
         switch (tokenizer.NextToken)
@@ -141,6 +143,26 @@ public class Parser()
             default:
                 return tree;
         }
+    }
+
+    /// <summary>
+    /// postfix := primary "!"*
+    /// </summary>
+    private TreeNode? ParsePostfix(ref Tokenizer tokenizer)
+    {
+        var tree = ParsePrimary(ref tokenizer);
+        if (tree is null)
+            return null;
+        while (true)
+            switch (tokenizer.NextToken)
+            {
+                case Token.Symbol { Value: '!' }:
+                    tokenizer.ScanToken();
+                    tree = new Factorial(tree);
+                    break;
+                default:
+                    return tree;
+            }
     }
 
     /// <summary>

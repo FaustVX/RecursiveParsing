@@ -53,6 +53,25 @@ public sealed class Negate(TreeNode node) : UnaryNode(node)
     }
 }
 
+public sealed class Factorial(TreeNode node) : UnaryNode(node)
+{
+    public override decimal Evaluate(Context ctx)
+    => F(Node.Evaluate(ctx));
+
+    static decimal F(decimal a)
+    => a switch
+    {
+        <= 1 => 1,
+        _ => a * F(a - 1),
+    };
+
+    public override void Print(StringBuilder sb)
+    {
+        Node.Print(sb);
+        sb.Append('!');
+    }
+}
+
 public abstract class BinaryNode(TreeNode left, TreeNode right) : TreeNode
 {
     public TreeNode Left { get; } = left;
