@@ -11,6 +11,7 @@ public readonly union Object(decimal, bool, Delegate)
     => obj switch
     {
         Object o => o,
+        int i => i,
         decimal d => d,
         bool b => b,
         Delegate d => d,

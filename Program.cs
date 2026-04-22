@@ -3,7 +3,7 @@ using RecursiveParsing;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 
-const string Input = "abs(-5) == 5";
+const string Input = "abs(-5) == rng()\n";
 
 var tokenizer = new Tokenizer(Input);
 do
@@ -21,4 +21,5 @@ treeNode.PrintTree(0);
 treeNode.Print(sb);
 Console.Write(sb);
 Console.Write(" = ");
-Console.WriteLine(treeNode.Evaluate(new([new("true", true), new("false", false), new ("abs", (Delegate)decimal.Abs)])));
+var rng = new Random();
+Console.WriteLine(treeNode.Evaluate(new([new("true", true), new("false", false), new ("abs", (Delegate)decimal.Abs), new("rng", (Delegate)(() => rng.Next()))])));
