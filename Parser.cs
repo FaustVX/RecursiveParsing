@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace RecursiveParsing;
 
 public class Parser()
@@ -15,9 +17,11 @@ public class Parser()
     /// <br/>
     /// • exponentiation    := postfix ("^" exponentiation)?
     /// <br/>
-    /// • postfix           := primary "!"*
+    /// • postfix           := primary ("!" | "(" args ")")*
     /// <br/>
     /// • primary           := ID | NUMBER | "(" expression ")"
+    /// <br/>
+    /// • args              := ( expression ( "," expression)* )?
     /// </summary>
     public TreeNode? Parse(string input)
     {
@@ -228,7 +232,7 @@ public class Parser()
     }
 
     /// <summary>
-    /// postfix := primary "!"*
+    /// postfix := primary ("!" | "(" args ")")*
     /// </summary>
     private TreeNode? ParsePostfix(Tokenizer tokenizer)
     {
@@ -241,6 +245,14 @@ public class Parser()
                 case Token.Symbol { Value: '!' }:
                     tokenizer.ScanToken();
                     tree = new Factorial(tree);
+                    break;
+                case Token.Symbol { Value: '(' }:
+                    tokenizer.ScanToken();
+                    var args = ParseArgs(tokenizer).ToImmutableArray();
+                    if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
+                        return null;
+                    tokenizer.ScanToken();
+                    tree = new Invocation(tree, args);
                     break;
                 default:
                     return tree;
@@ -272,5 +284,31 @@ public class Parser()
             default:
                 return null;
         };
+    }
+
+    /// <summary>
+    /// args := ( expression ( "," expression)* )?
+    /// </summary>
+    private IEnumerable<TreeNode> ParseArgs(Tokenizer tokenizer)
+    {
+        var arg = ParseExpression(tokenizer);
+        if (arg is null)
+            yield break;
+        yield return arg;
+        while (true)
+            switch (tokenizer.NextToken)
+            {
+                case Token.Symbol { Value: ',' }:
+                {
+                    tokenizer.ScanToken();
+                    arg = ParseExpression(tokenizer);
+                    if (arg is null)
+                        yield break;
+                    yield return arg;
+                    break;
+                }
+                default:
+                    yield break;
+            }
     }
 }

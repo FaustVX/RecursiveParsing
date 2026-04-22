@@ -3,7 +3,7 @@ using RecursiveParsing;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 
-const string Input = "3! != 2!";
+const string Input = "abs(-5) == 5";
 
 var tokenizer = new Tokenizer(Input);
 do
@@ -21,4 +21,4 @@ treeNode.PrintTree(0);
 treeNode.Print(sb);
 Console.Write(sb);
 Console.Write(" = ");
-Console.WriteLine(treeNode.Evaluate(new([new("true", 1), new("false", 0)])));
+Console.WriteLine(treeNode.Evaluate(new([new("true", true), new("false", false), new ("abs", (Delegate)decimal.Abs)])));

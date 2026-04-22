@@ -25,7 +25,7 @@ public class Tokenizer(string input)
                     return new Token.Symbol($"{symbol}{equals}");
                 }
                 return new Token.Symbol(symbol);
-            case ('+' or '-' or '*' or '/' or '^' or '(' or ')') and var symbol:
+            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',') and var symbol:
                 Input++;
                 return new Token.Symbol(symbol);
             case >= '0' and <= '9':
