@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace RecursiveParsing;
@@ -9,7 +10,7 @@ public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Ra
     {}
 }
 
-public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.EOL)
+public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.EOL) : IEquatable<Token>
 {
     public readonly record struct WhiteSpace(string Value)
     {
@@ -44,4 +45,28 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
 
     public override string ToString()
     => Value?.ToString()!;
+
+    public override int GetHashCode()
+    => Value?.GetHashCode() ?? -1;
+
+    public bool Equals(Token token)
+    => (this, token) switch
+    {
+        (Token.WhiteSpace { Value: var vl }, Token.WhiteSpace { Value: var vr }) => vl == vr,
+        (Token.Int { Value: var vl }, Token.Int { Value: var vr }) => vl == vr,
+        (Token.Id { Value: var vl }, Token.Id { Value: var vr }) => vl == vr,
+        (Token.Symbol { Value: string vl }, Token.Symbol { Value: string vr }) => vl == vr,
+        (Token.Symbol { Value: char vl }, Token.Symbol { Value: char vr }) => vl == vr,
+        (Token.EOL, Token.EOL) => true,
+        _ => false,
+    };
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    => obj is Token r && Equals(r);
+
+    public static bool operator ==(Token l, Token r)
+    => l.Equals(r);
+
+    public static bool operator !=(Token l, Token r)
+    => !l.Equals(r);
 }

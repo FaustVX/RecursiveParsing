@@ -21,6 +21,21 @@ public class Tokenizer(string input)
     private ReadOnlyMemory<char> _input = input.AsMemory();
     private int _i = 0;
 
+    public void Expect(Token token)
+    {
+        if (NextToken != token)
+            throw new ParserExpectedException(NextTokenSpan, token);
+        ScanToken();
+    }
+
+    public bool TryConsume(Token token)
+    {
+        if (NextToken != token)
+            return false;
+        ScanToken();
+        return true;
+    }
+
     public void ScanToken()
     {
         var token = ScanTokenImpl(out var length) ?? throw new TokenizerException(_i, _input.First ?? '\0');

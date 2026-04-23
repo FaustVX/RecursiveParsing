@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "5 < 2 ? 3_000 : rng() * 5 + 2";
+var input = "5 < 2 ? 3_000 : +(round(rng() * 5 + 2, 2))";
 
 var tokenizer = new Tokenizer(input);
 do
@@ -36,6 +36,6 @@ else
         new("false", false),
         new("abs", (Delegate)decimal.Abs),
         new("rng", (Delegate)new Random().NextDouble),
-        new("round", (Delegate)((decimal d) => decimal.Round(d))),
+        new("round", (Delegate)((decimal d, decimal decimals) => decimal.Round(d, (int)decimals))),
         ])));
 }
