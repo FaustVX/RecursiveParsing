@@ -76,13 +76,13 @@ public class Parser()
             {
                 tokenizer.ScanToken();
                 var right = ParseConditionnal(tokenizer);
-                return new Equal(tree, right, 0);
+                return new Equal(tree, right, NodePrecedence.Expression);
             }
             case Token.Symbol { Value: "!=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseConditionnal(tokenizer);
-                return new NotEqual(tree, right, 0);
+                return new NotEqual(tree, right, NodePrecedence.Expression);
             }
             default:
                 return tree;
@@ -103,7 +103,7 @@ public class Parser()
             throw new ParserException(tokenizer.NextTokenSpan);
         tokenizer.ScanToken();
         var @false = ParseConditionnal(tokenizer);
-        return new Conditionnal(cond, @true, @false, 1);
+        return new Conditionnal(cond, @true, @false, NodePrecedence.Conditionnal);
     }
 
     /// <summary>
@@ -118,25 +118,25 @@ public class Parser()
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                return new LessThan(tree, right, 2);
+                return new LessThan(tree, right, NodePrecedence.Relational);
             }
             case Token.Symbol { Value: "<=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                return new LessThanOrEqual(tree, right, 2);
+                return new LessThanOrEqual(tree, right, NodePrecedence.Relational);
             }
             case Token.Symbol { Value: '>' }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                return new GreaterThan(tree, right, 2);
+                return new GreaterThan(tree, right, NodePrecedence.Relational);
             }
             case Token.Symbol { Value: ">=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                return new GreaterThanOrEqual(tree, right, 2);
+                return new GreaterThanOrEqual(tree, right, NodePrecedence.Relational);
             }
             default:
                 return tree;
@@ -156,14 +156,14 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseTerm(tokenizer);
-                    tree = new Add(tree, right, 3);
+                    tree = new Add(tree, right, NodePrecedence.Additive);
                     break;
                 }
                 case Token.Symbol { Value: '-' }:
                 {
                     tokenizer.ScanToken();
                     var right = ParseTerm(tokenizer);
-                    tree = new Substract(tree, right, 3);
+                    tree = new Substract(tree, right, NodePrecedence.Additive);
                     break;
                 }
                 default:
@@ -184,14 +184,14 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseUnary(tokenizer);
-                    tree = new Multiply(tree, right, 4);
+                    tree = new Multiply(tree, right, NodePrecedence.Term);
                     break;
                 }
                 case Token.Symbol { Value: '/' }:
                 {
                     tokenizer.ScanToken();
                     var right = ParseUnary(tokenizer);
-                    tree = new Divide(tree, right, 4);
+                    tree = new Divide(tree, right, NodePrecedence.Term);
                     break;
                 }
                 default:
@@ -211,7 +211,7 @@ public class Parser()
             {
                 tokenizer.ScanToken();
                 var node = ParseUnary(tokenizer);
-                return new Negate(node, start..node.Span.End, 5);
+                return new Negate(node, start..node.Span.End, NodePrecedence.Unary);
             }
             case Token.Symbol { Value: '+' }:
             {
@@ -236,7 +236,7 @@ public class Parser()
             {
                 tokenizer.ScanToken();
                 var right = ParseExponentiation(tokenizer);
-                return new Power(tree, right, 6);
+                return new Power(tree, right, NodePrecedence.Exponentiation);
             }
             default:
                 return tree;
@@ -257,7 +257,7 @@ public class Parser()
                 {
                     var end = tokenizer.NextSpan.End;
                     tokenizer.ScanToken();
-                    tree = new Factorial(tree, start..end, 7);
+                    tree = new Factorial(tree, start..end, NodePrecedence.Postfix);
                     break;
                 }
                 case Token.Symbol { Value: '(' }:
@@ -268,7 +268,7 @@ public class Parser()
                     if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
                         throw new ParserException(tokenizer.NextTokenSpan);
                     tokenizer.ScanToken();
-                    tree = new Invocation(tree, args, start..end, 7);
+                    tree = new Invocation(tree, args, start..end, NodePrecedence.Postfix);
                     break;
                 }
                 default:
@@ -288,13 +288,13 @@ public class Parser()
             {
                 var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
-                return new Id(id, start..end, 8);
+                return new Id(id, start..end, NodePrecedence.Primary);
             }
             case Token.Int { Value: var i }:
             {
                 var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
-                return new Number(i, start..end, 8);
+                return new Number(i, start..end, NodePrecedence.Primary);
             }
             case Token.Symbol { Value: '(' }:
             {
