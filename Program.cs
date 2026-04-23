@@ -4,9 +4,9 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-const string Input = "+(5-3)";
+var input = "-f(2 + 3 * g(4))! ^ 2 < h(1, 2, 3)! == true";
 
-var tokenizer = new Tokenizer(Input);
+var tokenizer = new Tokenizer(input);
 do
 {
     tokenizer.ScanToken();
@@ -14,14 +14,17 @@ do
 } while (tokenizer.NextToken is not (null or Token.EOL));
 
 var parser = new Parser();
-var treeNode = parser.Parse(Input);
+var treeNode = parser.Parse(input);
 if (treeNode is null)
     return;
-treeNode.PrintTree(Input.AsSpan(), 0);
+treeNode.PrintTree(input.AsSpan(), 0);
 var sb = new StringBuilder();
 treeNode.Print(sb);
 Console.Write(sb);
-Console.Write(" = ");
+Console.Write("\n");
+parser.Parse(sb.ToString()).Print(sb.Clear());
+Console.Write(sb);
+return;
 Console.WriteLine(treeNode.Evaluate(new([
     new("true", true),
     new("false", false),

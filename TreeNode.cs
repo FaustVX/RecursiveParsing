@@ -26,7 +26,7 @@ public readonly union Object(decimal, bool, Delegate)
 [Serializable]
 public class RunTimeException() : Exception;
 
-public abstract record class TreeNode(Range Span)
+public abstract record class TreeNode(Range Span, int Precedence)
 {
     private static readonly Dictionary<int, string> _indent = [];
     public abstract void Print(StringBuilder sb);
@@ -50,7 +50,7 @@ public class Context(params IEnumerable<KeyValuePair<string, Object>> variables)
     public FrozenDictionary<string, Object> Variables { get; } = variables.ToFrozenDictionary();
 }
 
-public sealed record class Number(decimal I, Range Span) : TreeNode(Span)
+public sealed record class Number(decimal I, Range Span, int Precedence) : TreeNode(Span, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => I;
@@ -62,7 +62,7 @@ public sealed record class Number(decimal I, Range Span) : TreeNode(Span)
     => PrintTreeImpl(input, indentation);
 }
 
-public sealed record class Id(string Name, Range Span) : TreeNode(Span)
+public sealed record class Id(string Name, Range Span, int Precedence) : TreeNode(Span, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => ctx.Variables[Name];
@@ -74,7 +74,7 @@ public sealed record class Id(string Name, Range Span) : TreeNode(Span)
     => PrintTreeImpl(input, indentation);
 }
 
-public abstract record class UnaryNode(TreeNode Node, Range Span) : TreeNode(Span)
+public abstract record class UnaryNode(TreeNode Node, Range Span, int Precedence) : TreeNode(Span, Precedence)
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
@@ -83,7 +83,7 @@ public abstract record class UnaryNode(TreeNode Node, Range Span) : TreeNode(Spa
     }
 }
 
-public sealed record class Negate(TreeNode Node, Range Span) : UnaryNode(Node, Span)
+public sealed record class Negate(TreeNode Node, Range Span, int Precedence) : UnaryNode(Node, Span, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => Node.Evaluate(ctx) is decimal d ? -d : throw new RunTimeException();
@@ -91,11 +91,15 @@ public sealed record class Negate(TreeNode Node, Range Span) : UnaryNode(Node, S
     public override void Print(StringBuilder sb)
     {
         sb.Append('-');
+        if (Node.Precedence < Precedence)
+            sb.Append('(');
         Node.Print(sb);
+        if (Node.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Factorial(TreeNode Node, Range Span) : UnaryNode(Node, Span)
+public sealed record class Factorial(TreeNode Node, Range Span, int Precedence) : UnaryNode(Node, Span, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => F(Node.Evaluate(ctx) is decimal d ? d : throw new RunTimeException());
@@ -109,12 +113,16 @@ public sealed record class Factorial(TreeNode Node, Range Span) : UnaryNode(Node
 
     public override void Print(StringBuilder sb)
     {
+        if (Node.Precedence < Precedence)
+            sb.Append('(');
         Node.Print(sb);
+        if (Node.Precedence < Precedence)
+            sb.Append(')');
         sb.Append('!');
     }
 }
 
-public abstract record class BinaryNode(TreeNode Left, TreeNode Right) : TreeNode(Left.Span.Start..Right.Span.End)
+public abstract record class BinaryNode(TreeNode Left, TreeNode Right, int Precedence) : TreeNode(Left.Span.Start..Right.Span.End, Precedence)
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
@@ -124,7 +132,7 @@ public abstract record class BinaryNode(TreeNode Left, TreeNode Right) : TreeNod
     }
 }
 
-public sealed record class Add(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Add(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -135,15 +143,21 @@ public sealed record class Add(TreeNode Left, TreeNode Right) : BinaryNode(Left,
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('+');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" + ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Substract(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Substract(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -154,15 +168,21 @@ public sealed record class Substract(TreeNode Left, TreeNode Right) : BinaryNode
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('-');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" - ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Multiply(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Multiply(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -173,15 +193,21 @@ public sealed record class Multiply(TreeNode Left, TreeNode Right) : BinaryNode(
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('*');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" * ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Divide(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Divide(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -192,15 +218,21 @@ public sealed record class Divide(TreeNode Left, TreeNode Right) : BinaryNode(Le
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('/');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" / ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Power(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Power(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -211,15 +243,21 @@ public sealed record class Power(TreeNode Left, TreeNode Right) : BinaryNode(Lef
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence <= Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('^');
+        if (Left.Precedence <= Precedence)
+            sb.Append(')');
+        sb.Append(" ^ ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Equal(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class Equal(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -231,15 +269,21 @@ public sealed record class Equal(TreeNode Left, TreeNode Right) : BinaryNode(Lef
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append("==");
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" == ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class NotEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class NotEqual(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -251,15 +295,21 @@ public sealed record class NotEqual(TreeNode Left, TreeNode Right) : BinaryNode(
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append("!=");
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" != ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class LessThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class LessThan(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -270,15 +320,21 @@ public sealed record class LessThan(TreeNode Left, TreeNode Right) : BinaryNode(
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('<');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" < ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -289,15 +345,21 @@ public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right) : Bina
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append("<=");
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" <= ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class GreaterThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class GreaterThan(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -308,15 +370,21 @@ public sealed record class GreaterThan(TreeNode Left, TreeNode Right) : BinaryNo
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append('>');
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" > ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
+public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right, int Precedence) : BinaryNode(Left, Right, Precedence)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -327,15 +395,21 @@ public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right) : B
 
     public override void Print(StringBuilder sb)
     {
-        sb.Append('(');
+        if (Left.Precedence < Precedence)
+            sb.Append('(');
         Left.Print(sb);
-        sb.Append(">=");
+        if (Left.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(" >= ");
+        if (Right.Precedence < Precedence)
+            sb.Append('(');
         Right.Print(sb);
-        sb.Append(')');
+        if (Right.Precedence < Precedence)
+            sb.Append(')');
     }
 }
 
-public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span) : TreeNode(Span)
+public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span, int Precedence) : TreeNode(Span, Precedence)
 {
     public override Object Evaluate(Context ctx)
     {
@@ -348,11 +422,15 @@ public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode
 
     public override void Print(StringBuilder sb)
     {
+        if (Function.Precedence < Precedence)
+            sb.Append('(');
         Function.Print(sb);
+        if (Function.Precedence < Precedence)
+            sb.Append(')');
         sb.Append('(');
         for (int i = 0; i < Args.Length; i++)
         {
-            if (i > 0) sb.Append(',');
+            if (i > 0) sb.Append(", ");
             Args[i].Print(sb);
         }
         sb.Append(')');
