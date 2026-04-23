@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "-f(2 + 3 * g(4))! ^ 2 < h(1, 2, 3)! == true";
+var input = "(a ? b : c) ? d : e";
 
 var tokenizer = new Tokenizer(input);
 do

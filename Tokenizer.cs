@@ -63,7 +63,7 @@ public class Tokenizer(string input)
                 }
                 length = 1;
                 return new Token.Symbol(symbol);
-            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',') and var symbol:
+            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',' or '?' or ':') and var symbol:
                 _input++;
                 length = 1;
                 return new Token.Symbol(symbol);
