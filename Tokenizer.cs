@@ -54,10 +54,10 @@ public class Tokenizer(string input)
     {
         switch (_input.First)
         {
-            case null:
+            case null: // End of line
                 length = 0;
                 return new Token.EOL();
-            case char ws when char.IsWhiteSpace(ws):
+            case char ws when char.IsWhiteSpace(ws): // whitespace
             {
                 var input = _input;
                 length = 0;
@@ -68,7 +68,7 @@ public class Tokenizer(string input)
                 } while (_input.First is char c && char.IsWhiteSpace(c));
                 return new Token.WhiteSpace(input[..length].ToString());
             }
-            case ('<' or '>' or '=' or '!') and var symbol:
+            case ('<' or '>' or '=' or '!') and var symbol: // 2-symbol
                 _input++;
                 if (_input.First is '=' and var equals)
                 {
@@ -78,11 +78,11 @@ public class Tokenizer(string input)
                 }
                 length = 1;
                 return new Token.Symbol(symbol);
-            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',' or '?' or ':') and var symbol:
+            case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',' or '?' or ':') and var symbol: // single symbol
                 _input++;
                 length = 1;
                 return new Token.Symbol(symbol);
-            case >= '0' and <= '9':
+            case >= '0' and <= '9': // digit
             {
                 length = 0;
                 int i = 0;
@@ -95,7 +95,7 @@ public class Tokenizer(string input)
                 } while (_input.First is (>= '0' and <= '9') or '_');
                 return new Token.Int(i);
             }
-            case '_' or (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'):
+            case '_' or (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'): // identifier
             {
                 var input = _input;
                 length = 0;
