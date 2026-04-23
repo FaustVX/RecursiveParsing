@@ -64,7 +64,7 @@ public class Context(params IEnumerable<KeyValuePair<string, RTObject>> variable
     public FrozenDictionary<string, RTObject> Variables { get; } = variables.ToFrozenDictionary();
 }
 
-public sealed record class Number(decimal I, Range Span, NodePrecedence Precedence) : TreeNode(Span, Precedence)
+public sealed record class Number(decimal I, Range Span) : TreeNode(Span, NodePrecedence.Unary)
 {
     public override RTObject Evaluate(Context ctx)
     => I;
@@ -76,7 +76,7 @@ public sealed record class Number(decimal I, Range Span, NodePrecedence Preceden
     => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
-public sealed record class Id(string Name, Range Span, NodePrecedence Precedence) : TreeNode(Span, Precedence)
+public sealed record class Id(string Name, Range Span) : TreeNode(Span, NodePrecedence.Unary)
 {
     public override RTObject Evaluate(Context ctx)
     => ctx.Variables[Name];
@@ -88,7 +88,7 @@ public sealed record class Id(string Name, Range Span, NodePrecedence Precedence
     => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
-public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span, NodePrecedence Precedence) : TreeNode(Span, Precedence)
+public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span) : TreeNode(Span, NodePrecedence.Postfix)
 {
     public override RTObject Evaluate(Context ctx)
     {
@@ -133,7 +133,7 @@ public abstract record class UnaryNode(TreeNode Node, Range Span, NodePrecedence
     }
 }
 
-public sealed record class Negate(TreeNode Node, Range Span, NodePrecedence Precedence) : UnaryNode(Node, Span, Precedence)
+public sealed record class Negate(TreeNode Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Unary)
 {
     public override RTObject Evaluate(Context ctx)
     => Node.Evaluate(ctx) is decimal d ? -d : throw new RunTimeException();
@@ -149,7 +149,7 @@ public sealed record class Negate(TreeNode Node, Range Span, NodePrecedence Prec
     }
 }
 
-public sealed record class Factorial(TreeNode Node, Range Span, NodePrecedence Precedence) : UnaryNode(Node, Span, Precedence)
+public sealed record class Factorial(TreeNode Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Postfix)
 {
     public override RTObject Evaluate(Context ctx)
     => F(Node.Evaluate(ctx) is decimal d ? d : throw new RunTimeException());
@@ -182,7 +182,7 @@ public abstract record class BinaryNode(TreeNode Left, TreeNode Right, NodePrece
     }
 }
 
-public sealed record class Add(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Add(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Additive)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -207,7 +207,7 @@ public sealed record class Add(TreeNode Left, TreeNode Right, NodePrecedence Pre
     }
 }
 
-public sealed record class Substract(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Substract(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Additive)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -232,7 +232,7 @@ public sealed record class Substract(TreeNode Left, TreeNode Right, NodePreceden
     }
 }
 
-public sealed record class Multiply(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Multiply(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Term)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -257,7 +257,7 @@ public sealed record class Multiply(TreeNode Left, TreeNode Right, NodePrecedenc
     }
 }
 
-public sealed record class Divide(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Divide(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Term)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -282,7 +282,7 @@ public sealed record class Divide(TreeNode Left, TreeNode Right, NodePrecedence 
     }
 }
 
-public sealed record class Power(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Power(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Exponentiation)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -307,7 +307,7 @@ public sealed record class Power(TreeNode Left, TreeNode Right, NodePrecedence P
     }
 }
 
-public sealed record class Equal(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class Equal(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Equation)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -333,7 +333,7 @@ public sealed record class Equal(TreeNode Left, TreeNode Right, NodePrecedence P
     }
 }
 
-public sealed record class NotEqual(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class NotEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Equation)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -359,7 +359,7 @@ public sealed record class NotEqual(TreeNode Left, TreeNode Right, NodePrecedenc
     }
 }
 
-public sealed record class LessThan(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class LessThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Relational)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -384,7 +384,7 @@ public sealed record class LessThan(TreeNode Left, TreeNode Right, NodePrecedenc
     }
 }
 
-public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Relational)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -409,7 +409,7 @@ public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right, NodePr
     }
 }
 
-public sealed record class GreaterThan(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class GreaterThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Relational)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -434,7 +434,7 @@ public sealed record class GreaterThan(TreeNode Left, TreeNode Right, NodePreced
     }
 }
 
-public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right, NodePrecedence Precedence) : BinaryNode(Left, Right, Precedence)
+public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right, NodePrecedence.Relational)
 {
     public override RTObject Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -470,7 +470,7 @@ public abstract record class TernaryNode(TreeNode Left, TreeNode Middle, TreeNod
     }
 }
 
-public sealed record class Conditionnal(TreeNode Condition, TreeNode True, TreeNode False, NodePrecedence Precedence) : TernaryNode(Condition, True, False, Precedence)
+public sealed record class Conditionnal(TreeNode Condition, TreeNode True, TreeNode False) : TernaryNode(Condition, True, False, NodePrecedence.Conditionnal)
 {
     public override RTObject Evaluate(Context ctx)
     => Left.Evaluate(ctx) is bool b
