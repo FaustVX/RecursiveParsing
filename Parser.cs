@@ -16,6 +16,18 @@ public class ParserException(TokenSpan tokenSpan) : Exception
     }
 }
 
+[Serializable]
+public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : ParserException(tokenSpan)
+{
+    public Token Expected { get; } = expected;
+
+    public override string ToString()
+    {
+        Console.Error.WriteLine($"Expected token {Expected}");
+        return base.ToString();
+    }
+}
+
 public class Parser()
 {
     /// <summary>
@@ -45,7 +57,7 @@ public class Parser()
         tokenizer.ScanToken();
         var tree = Parse(tokenizer);
         if (tokenizer.NextToken is not Token.EOL)
-            throw new ParserException(tokenizer.NextTokenSpan);
+            throw new ParserExpectedException(tokenizer.NextTokenSpan, new Token.EOL());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,7 +112,7 @@ public class Parser()
         tokenizer.ScanToken();
         var @true = ParseExpression(tokenizer);
         if (tokenizer.NextToken is not Token.Symbol { Value: ':' })
-            throw new ParserException(tokenizer.NextTokenSpan);
+            throw new ParserExpectedException(tokenizer.NextTokenSpan, new Token.Symbol { Value = ':' });
         tokenizer.ScanToken();
         var @false = ParseConditionnal(tokenizer);
         return new Conditionnal(cond, @true, @false, NodePrecedence.Conditionnal);
@@ -266,7 +278,7 @@ public class Parser()
                     var args = ParseArgs(tokenizer).ToImmutableArray();
                     var end = tokenizer.NextSpan.End;
                     if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
-                        throw new ParserException(tokenizer.NextTokenSpan);
+                        throw new ParserExpectedException(tokenizer.NextTokenSpan, new Token.Symbol { Value = ')' });
                     tokenizer.ScanToken();
                     tree = new Invocation(tree, args, start..end, NodePrecedence.Postfix);
                     break;
@@ -301,7 +313,7 @@ public class Parser()
                 tokenizer.ScanToken();
                 var tree = ParseExpression(tokenizer);
                 if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
-                    throw new ParserException(tokenizer.NextTokenSpan);
+                    throw new ParserExpectedException(tokenizer.NextTokenSpan, new Token.Symbol { Value = ')' });
                 var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
                 return tree with { Span = start..end };
