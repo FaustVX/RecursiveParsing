@@ -54,8 +54,8 @@ public abstract record class TreeNode(Range Span, NodePrecedence Precedence)
         s.Fill(' ');
         return indent = new string(s);
     }
-    protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation)
-    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}:");
+    protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation, bool isTerminal)
+    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}{(isTerminal ? "" : ":")}");
 }
 
 public class Context(params IEnumerable<KeyValuePair<string, Object>> variables)
@@ -72,7 +72,7 @@ public sealed record class Number(decimal I, Range Span, NodePrecedence Preceden
     => sb.Append(I);
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation);
+    => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
 public sealed record class Id(string Name, Range Span, NodePrecedence Precedence) : TreeNode(Span, Precedence)
@@ -84,7 +84,7 @@ public sealed record class Id(string Name, Range Span, NodePrecedence Precedence
     => sb.Append(Name);
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation);
+    => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
 public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span, NodePrecedence Precedence) : TreeNode(Span, Precedence)
@@ -116,7 +116,7 @@ public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        PrintTreeImpl(input, indentation);
+        PrintTreeImpl(input, indentation, isTerminal: false);
         Function.PrintTree(input, indentation + 1);
         foreach (var arg in Args)
             arg.PrintTree(input, indentation + 1);
@@ -127,7 +127,7 @@ public abstract record class UnaryNode(TreeNode Node, Range Span, NodePrecedence
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        PrintTreeImpl(input, indentation);
+        PrintTreeImpl(input, indentation, isTerminal: false);
         Node.PrintTree(input, indentation + 1);
     }
 }
@@ -175,7 +175,7 @@ public abstract record class BinaryNode(TreeNode Left, TreeNode Right, NodePrece
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        PrintTreeImpl(input, indentation);
+        PrintTreeImpl(input, indentation, isTerminal: false);
         Left.PrintTree(input, indentation + 1);
         Right.PrintTree(input, indentation + 1);
     }
@@ -462,7 +462,7 @@ public abstract record class TernaryNode(TreeNode Left, TreeNode Middle, TreeNod
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        PrintTreeImpl(input, indentation);
+        PrintTreeImpl(input, indentation, isTerminal: false);
         Left.PrintTree(input, indentation + 1);
         Middle.PrintTree(input, indentation + 1);
         Right.PrintTree(input, indentation + 1);
