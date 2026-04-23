@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "5 < 2 ? 3_000 : +(round(rng() * 5 + 2, 2))";
+var input = "a == b ? c : d";
 
 var tokenizer = new Tokenizer(input);
 do
@@ -22,7 +22,7 @@ var sb = new StringBuilder();
 treeNode.Print(sb);
 Console.Write(sb);
 #pragma warning disable CS0162 // Unreachable code detected
-if (false) // double parse
+if (true) // double parse
 {
     Console.Write("\n");
     parser.Parse(sb.ToString()).Print(sb.Clear());

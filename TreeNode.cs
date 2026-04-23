@@ -29,7 +29,8 @@ public class RunTimeException() : Exception;
 public enum NodePrecedence
 {
     Expression = 1, // not 0 to avoid implicit conversion from 0
-    Conditionnal,
+    Conditionnal = Expression,
+    Equation,
     Relational,
     Additive,
     Term,

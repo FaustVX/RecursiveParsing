@@ -1,4 +1,3 @@
-#pragma warning disable CA1859 // Use concrete types when possible for improved performance
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
@@ -31,9 +30,11 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
 public class Parser()
 {
     /// <summary>
-    /// • expression        := conditionnal (("==" | "!=") conditionnal)?
+    /// • expression        := conditionnal
     /// <br/>
-    /// • conditionnal      := relational "?" relational ":" relational
+    /// • conditionnal      := equation "?" expression ":" conditionnal
+    /// <br/>
+    /// • equation          := relational (("==" | "!=") relational)?
     /// <br/>
     /// • relational        := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?
     /// <br/>
@@ -76,30 +77,36 @@ public class Parser()
     }
 
     /// <summary>
-    /// expression := conditionnal (("==" | "!=") conditionnal)?
+    /// expression := conditionnal
     /// </summary>
     private TreeNode ParseExpression(Tokenizer tokenizer)
-    {
-        var tree = ParseConditionnal(tokenizer);
-        if (tokenizer.TryConsume(new Token.Symbol { Value = "==" }))
-            return new Equal(tree, ParseConditionnal(tokenizer), NodePrecedence.Expression);
-        if (tokenizer.TryConsume(new Token.Symbol { Value = "!=" }))
-            return new NotEqual(tree, ParseConditionnal(tokenizer), NodePrecedence.Expression);
-        return tree;
-    }
+    => ParseConditionnal(tokenizer);
 
     /// <summary>
-    /// conditionnal := relational "?" expression ":" conditionnal
+    /// conditionnal := equation "?" expression ":" conditionnal
     /// </summary>
     private TreeNode ParseConditionnal(Tokenizer tokenizer)
     {
-        var cond = ParseRelational(tokenizer);
+        var cond = ParseEquation(tokenizer);
         if (!tokenizer.TryConsume(new Token.Symbol { Value = '?' }))
             return cond;
         var @true = ParseExpression(tokenizer);
         tokenizer.Expect(new Token.Symbol { Value = ':' });
         var @false = ParseConditionnal(tokenizer);
         return new Conditionnal(cond, @true, @false, NodePrecedence.Conditionnal);
+    }
+
+    /// <summary>
+    /// equation := relational (("==" | "!=") relational)?
+    /// </summary>
+    private TreeNode ParseEquation(Tokenizer tokenizer)
+    {
+        var tree = ParseRelational(tokenizer);
+        if (tokenizer.TryConsume(new Token.Symbol { Value = "==" }))
+            return new Equal(tree, ParseRelational(tokenizer), NodePrecedence.Equation);
+        if (tokenizer.TryConsume(new Token.Symbol { Value = "!=" }))
+            return new NotEqual(tree, ParseRelational(tokenizer), NodePrecedence.Equation);
+        return tree;
     }
 
     /// <summary>
