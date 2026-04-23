@@ -12,6 +12,8 @@ public readonly union Object(decimal, bool, Delegate)
     {
         Object o => o,
         int i => i,
+        float f => (decimal)f,
+        double d => (decimal)d,
         decimal d => d,
         bool b => b,
         Delegate d => d,
@@ -22,19 +24,14 @@ public readonly union Object(decimal, bool, Delegate)
 }
 
 [Serializable]
-public class RunTimeException : Exception
-{
-    public RunTimeException() { }
-    public RunTimeException(string message) : base(message) { }
-    public RunTimeException(string message, Exception inner) : base(message, inner) { }
-}
+public class RunTimeException() : Exception;
 
-public abstract class TreeNode
+public abstract record class TreeNode(Range Span)
 {
     private static readonly Dictionary<int, string> _indent = [];
     public abstract void Print(StringBuilder sb);
     public abstract Object Evaluate(Context ctx);
-    public abstract void PrintTree(int indentation = 0);
+    public abstract void PrintTree(ReadOnlySpan<char> input, int indentation = 0);
     protected string IndentSpaces(int depth)
     {
         ref var indent = ref CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
@@ -44,6 +41,8 @@ public abstract class TreeNode
         s.Fill(' ');
         return indent = new string(s);
     }
+    protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation)
+    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}:");
 }
 
 public class Context(params IEnumerable<KeyValuePair<string, Object>> variables)
@@ -51,46 +50,40 @@ public class Context(params IEnumerable<KeyValuePair<string, Object>> variables)
     public FrozenDictionary<string, Object> Variables { get; } = variables.ToFrozenDictionary();
 }
 
-public sealed class Number(decimal i) : TreeNode
+public sealed record class Number(decimal I, Range Span) : TreeNode(Span)
 {
-    public decimal I { get; } = i;
-
     public override Object Evaluate(Context ctx)
     => I;
 
     public override void Print(StringBuilder sb)
     => sb.Append(I);
 
-    public override void PrintTree(int indentation)
-    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}: {I}");
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation);
 }
 
-public sealed class Id(string name) : TreeNode
+public sealed record class Id(string Name, Range Span) : TreeNode(Span)
 {
-    public string Name { get; } = name;
-
     public override Object Evaluate(Context ctx)
     => ctx.Variables[Name];
 
     public override void Print(StringBuilder sb)
     => sb.Append(Name);
 
-    public override void PrintTree(int indentation)
-    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}: {Name}");
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation);
 }
 
-public abstract class UnaryNode(TreeNode node) : TreeNode
+public abstract record class UnaryNode(TreeNode Node, Range Span) : TreeNode(Span)
 {
-    public TreeNode Node { get; } = node;
-
-    public override void PrintTree(int indentation)
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}:");
-        Node.PrintTree(indentation + 1);
+        PrintTreeImpl(input, indentation);
+        Node.PrintTree(input, indentation + 1);
     }
 }
 
-public sealed class Negate(TreeNode node) : UnaryNode(node)
+public sealed record class Negate(TreeNode Node, Range Span) : UnaryNode(Node, Span)
 {
     public override Object Evaluate(Context ctx)
     => Node.Evaluate(ctx) is decimal d ? -d : throw new RunTimeException();
@@ -102,7 +95,7 @@ public sealed class Negate(TreeNode node) : UnaryNode(node)
     }
 }
 
-public sealed class Factorial(TreeNode node) : UnaryNode(node)
+public sealed record class Factorial(TreeNode Node, Range Span) : UnaryNode(Node, Span)
 {
     public override Object Evaluate(Context ctx)
     => F(Node.Evaluate(ctx) is decimal d ? d : throw new RunTimeException());
@@ -121,20 +114,17 @@ public sealed class Factorial(TreeNode node) : UnaryNode(node)
     }
 }
 
-public abstract class BinaryNode(TreeNode left, TreeNode right) : TreeNode
+public abstract record class BinaryNode(TreeNode Left, TreeNode Right) : TreeNode(Left.Span.Start..Right.Span.End)
 {
-    public TreeNode Left { get; } = left;
-    public TreeNode Right { get; } = right;
-
-    public override void PrintTree(int indentation)
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}:");
-        Left.PrintTree(indentation + 1);
-        Right.PrintTree(indentation + 1);
+        PrintTreeImpl(input, indentation);
+        Left.PrintTree(input, indentation + 1);
+        Right.PrintTree(input, indentation + 1);
     }
 }
 
-public sealed class Add(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Add(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -153,7 +143,7 @@ public sealed class Add(TreeNode left, TreeNode right) : BinaryNode(left, right)
     }
 }
 
-public sealed class Substract(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Substract(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -172,7 +162,7 @@ public sealed class Substract(TreeNode left, TreeNode right) : BinaryNode(left, 
     }
 }
 
-public sealed class Multiply(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Multiply(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -191,7 +181,7 @@ public sealed class Multiply(TreeNode left, TreeNode right) : BinaryNode(left, r
     }
 }
 
-public sealed class Divide(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Divide(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -210,7 +200,7 @@ public sealed class Divide(TreeNode left, TreeNode right) : BinaryNode(left, rig
     }
 }
 
-public sealed class Power(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Power(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -229,7 +219,7 @@ public sealed class Power(TreeNode left, TreeNode right) : BinaryNode(left, righ
     }
 }
 
-public sealed class Equal(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class Equal(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -249,7 +239,7 @@ public sealed class Equal(TreeNode left, TreeNode right) : BinaryNode(left, righ
     }
 }
 
-public sealed class NotEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class NotEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -269,7 +259,7 @@ public sealed class NotEqual(TreeNode left, TreeNode right) : BinaryNode(left, r
     }
 }
 
-public sealed class LessThan(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class LessThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -288,7 +278,7 @@ public sealed class LessThan(TreeNode left, TreeNode right) : BinaryNode(left, r
     }
 }
 
-public sealed class LessThanOrEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class LessThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -307,7 +297,7 @@ public sealed class LessThanOrEqual(TreeNode left, TreeNode right) : BinaryNode(
     }
 }
 
-public sealed class GreaterThan(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class GreaterThan(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -326,7 +316,7 @@ public sealed class GreaterThan(TreeNode left, TreeNode right) : BinaryNode(left
     }
 }
 
-public sealed class GreaterThanOrEqual(TreeNode left, TreeNode right) : BinaryNode(left, right)
+public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right) : BinaryNode(Left, Right)
 {
     public override Object Evaluate(Context ctx)
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
@@ -345,11 +335,8 @@ public sealed class GreaterThanOrEqual(TreeNode left, TreeNode right) : BinaryNo
     }
 }
 
-public sealed class Invocation(TreeNode function, ImmutableArray<TreeNode> args) : TreeNode
+public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span) : TreeNode(Span)
 {
-    public TreeNode Function { get; } = function;
-    public ImmutableArray<TreeNode> Args { get; } = args;
-
     public override Object Evaluate(Context ctx)
     {
         if (Function.Evaluate(ctx) is not Delegate func)
@@ -371,11 +358,11 @@ public sealed class Invocation(TreeNode function, ImmutableArray<TreeNode> args)
         sb.Append(')');
     }
 
-    public override void PrintTree(int indentation)
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
-        Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name}:");
-        Function.PrintTree(indentation + 1);
+        PrintTreeImpl(input, indentation);
+        Function.PrintTree(input, indentation + 1);
         foreach (var arg in Args)
-            arg.PrintTree(indentation + 1);
+            arg.PrintTree(input, indentation + 1);
     }
 }

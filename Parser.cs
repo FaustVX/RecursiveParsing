@@ -1,6 +1,19 @@
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 namespace RecursiveParsing;
+
+[Serializable]
+public class ParserException(TokenSpan tokenSpan) : Exception
+{
+    public TokenSpan TokenSpan { get; } = tokenSpan;
+
+    public override string ToString()
+    {
+        Console.Error.WriteLine($"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}");
+        return base.ToString();
+    }
+}
 
 public class Parser()
 {
@@ -23,40 +36,49 @@ public class Parser()
     /// <br/>
     /// • args              := ( expression ( "," expression)* )?
     /// </summary>
-    public TreeNode? Parse(string input)
+    public TreeNode Parse(string input)
     {
         var tokenizer = new Tokenizer(input);
         tokenizer.ScanToken();
-        var tree = ParseExpression(tokenizer);
+        var tree = Parse(tokenizer);
         if (tokenizer.NextToken is not Token.EOL)
-            return null;
+            throw new ParserException(tokenizer.NextTokenSpan);
         return tree;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        TreeNode Parse(Tokenizer tokenizer)
+        {
+            try
+            {
+                return ParseExpression(tokenizer);
+            }
+            catch (ParserException ex)
+            {
+#pragma warning disable CA2200 // Rethrow to preserve stack details
+                throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
+            }
+        }
     }
 
     /// <summary>
     /// expression := relational (("==" | "!=") relational)?
     /// </summary>
-    private TreeNode? ParseExpression(Tokenizer tokenizer)
+    private TreeNode ParseExpression(Tokenizer tokenizer)
     {
         var tree = ParseRelational(tokenizer);
-        if (tree is null)
-            return null;
         switch (tokenizer.NextToken)
         {
             case Token.Symbol { Value: "==" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseRelational(tokenizer);
-                if (right is null)
-                    return null;
                 return new Equal(tree, right);
             }
             case Token.Symbol { Value: "!=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseRelational(tokenizer);
-                if (right is null)
-                    return null;
                 return new NotEqual(tree, right);
             }
             default:
@@ -67,43 +89,33 @@ public class Parser()
     /// <summary>
     /// relational := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?
     /// </summary>
-    private TreeNode? ParseRelational(Tokenizer tokenizer)
+    private TreeNode ParseRelational(Tokenizer tokenizer)
     {
         var tree = ParseAdditive(tokenizer);
-        if (tree is null)
-            return null;
         switch (tokenizer.NextToken)
         {
             case Token.Symbol { Value: '<' }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                if (right is null)
-                    return null;
                 return new LessThan(tree, right);
             }
             case Token.Symbol { Value: "<=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                if (right is null)
-                    return null;
                 return new LessThanOrEqual(tree, right);
             }
             case Token.Symbol { Value: '>' }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                if (right is null)
-                    return null;
                 return new GreaterThan(tree, right);
             }
             case Token.Symbol { Value: ">=" }:
             {
                 tokenizer.ScanToken();
                 var right = ParseAdditive(tokenizer);
-                if (right is null)
-                    return null;
                 return new GreaterThanOrEqual(tree, right);
             }
             default:
@@ -114,11 +126,9 @@ public class Parser()
     /// <summary>
     /// additive := term (("+" | "-") term)*
     /// </summary>
-    private TreeNode? ParseAdditive(Tokenizer tokenizer)
+    private TreeNode ParseAdditive(Tokenizer tokenizer)
     {
         var tree = ParseTerm(tokenizer);
-        if (tree is null)
-            return null;
         while (true)
             switch (tokenizer.NextToken)
             {
@@ -126,8 +136,6 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseTerm(tokenizer);
-                    if (right is null)
-                        return null;
                     tree = new Add(tree, right);
                     break;
                 }
@@ -135,8 +143,6 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseTerm(tokenizer);
-                    if (right is null)
-                        return null;
                     tree = new Substract(tree, right);
                     break;
                 }
@@ -148,11 +154,9 @@ public class Parser()
     /// <summary>
     /// term := unary (("*" | "/") unary)*
     /// </summary>
-    private TreeNode? ParseTerm(Tokenizer tokenizer)
+    private TreeNode ParseTerm(Tokenizer tokenizer)
     {
         var tree = ParseUnary(tokenizer);
-        if (tree is null)
-            return null;
         while (true)
             switch (tokenizer.NextToken)
             {
@@ -160,8 +164,6 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseUnary(tokenizer);
-                    if (right is null)
-                        return null;
                     tree = new Multiply(tree, right);
                     break;
                 }
@@ -169,14 +171,9 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     var right = ParseUnary(tokenizer);
-                    if (right is null)
-                        return null;
                     tree = new Divide(tree, right);
                     break;
                 }
-                // case Token.Symbol { Value: '!' }:
-                //     tokenizer.ScanToken();
-                //     return new Factorial(tree);
                 default:
                     return tree;
             }
@@ -185,23 +182,22 @@ public class Parser()
     /// <summary>
     /// unary := ("+" | "-") unary | exponentiation
     /// </summary>
-    private TreeNode? ParseUnary(Tokenizer tokenizer)
+    private TreeNode ParseUnary(Tokenizer tokenizer)
     {
+        var start = tokenizer.NextSpan.Start;
         switch (tokenizer.NextToken)
         {
             case Token.Symbol { Value: '-' }:
             {
                 tokenizer.ScanToken();
                 var node = ParseUnary(tokenizer);
-                if (node is null)
-                    return null;
-                return new Negate(node);
+                return new Negate(node, start..node.Span.End);
             }
             case Token.Symbol { Value: '+' }:
             {
                 tokenizer.ScanToken();
                 var node = ParseUnary(tokenizer);
-                    return node;
+                    return node with { Span = start..node.Span.End };
             }
             default:
                 return ParseExponentiation(tokenizer);
@@ -211,19 +207,15 @@ public class Parser()
     /// <summary>
     /// exponentiation := postfix ("^" exponentiation)?
     /// </summary>
-    private TreeNode? ParseExponentiation(Tokenizer tokenizer)
+    private TreeNode ParseExponentiation(Tokenizer tokenizer)
     {
         var tree = ParsePostfix(tokenizer);
-        if (tree is null)
-            return null;
         switch (tokenizer.NextToken)
         {
             case Token.Symbol { Value: '^' }:
             {
                 tokenizer.ScanToken();
                 var right = ParseExponentiation(tokenizer);
-                if (right is null)
-                    return null;
                 return new Power(tree, right);
             }
             default:
@@ -234,26 +226,31 @@ public class Parser()
     /// <summary>
     /// postfix := primary ("!" | "(" args ")")*
     /// </summary>
-    private TreeNode? ParsePostfix(Tokenizer tokenizer)
+    private TreeNode ParsePostfix(Tokenizer tokenizer)
     {
+        var start = tokenizer.NextSpan.Start;
         var tree = ParsePrimary(tokenizer);
-        if (tree is null)
-            return null;
         while (true)
             switch (tokenizer.NextToken)
             {
                 case Token.Symbol { Value: '!' }:
+                {
+                    var end = tokenizer.NextSpan.End;
                     tokenizer.ScanToken();
-                    tree = new Factorial(tree);
+                    tree = new Factorial(tree, start..end);
                     break;
+                }
                 case Token.Symbol { Value: '(' }:
+                {
                     tokenizer.ScanToken();
                     var args = ParseArgs(tokenizer).ToImmutableArray();
+                    var end = tokenizer.NextSpan.End;
                     if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
-                        return null;
+                        throw new ParserException(tokenizer.NextTokenSpan);
                     tokenizer.ScanToken();
-                    tree = new Invocation(tree, args);
+                    tree = new Invocation(tree, args, start..end);
                     break;
+                }
                 default:
                     return tree;
             }
@@ -262,27 +259,35 @@ public class Parser()
     /// <summary>
     /// primary := ID | NUMBER | "(" expression ")"
     /// </summary>
-    private TreeNode? ParsePrimary(Tokenizer tokenizer)
+    private TreeNode ParsePrimary(Tokenizer tokenizer)
     {
+        var start = tokenizer.NextSpan.Start;
         switch (tokenizer.NextToken)
         {
             case Token.Id { Value: var id }:
+            {
+                var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
-                return new Id(id);
+                return new Id(id, start..end);
+            }
             case Token.Int { Value: var i }:
+            {
+                var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
-                return new Number(i);
+                return new Number(i, start..end);
+            }
             case Token.Symbol { Value: '(' }:
+            {
                 tokenizer.ScanToken();
                 var tree = ParseExpression(tokenizer);
-                if (tree is null)
-                    return null;
                 if (tokenizer.NextToken is not Token.Symbol { Value: ')' })
-                    return null;
+                    throw new ParserException(tokenizer.NextTokenSpan);
+                var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
-                return tree;
+                return tree with { Span = start..end };
+            }
             default:
-                return null;
+                throw new ParserException(tokenizer.NextTokenSpan);
         };
     }
 
@@ -291,9 +296,9 @@ public class Parser()
     /// </summary>
     private IEnumerable<TreeNode> ParseArgs(Tokenizer tokenizer)
     {
-        var arg = ParseExpression(tokenizer);
-        if (arg is null)
+        if (tokenizer.NextToken is Token.Symbol { Value: ')'})
             yield break;
+        var arg = ParseExpression(tokenizer);
         yield return arg;
         while (true)
             switch (tokenizer.NextToken)
@@ -302,8 +307,6 @@ public class Parser()
                 {
                     tokenizer.ScanToken();
                     arg = ParseExpression(tokenizer);
-                    if (arg is null)
-                        yield break;
                     yield return arg;
                     break;
                 }
