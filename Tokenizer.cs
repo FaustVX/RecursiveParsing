@@ -73,10 +73,11 @@ public class Tokenizer(string input)
                 int i = 0;
                 do
                 {
-                    i = i * 10 + _input.First!.Value - '0';
+                    if (_input.First is not '_')
+                        i = i * 10 + _input.First!.Value - '0';
                     length++;
                     _input++;
-                } while (_input.First is >= '0' and <= '9');
+                } while (_input.First is (>= '0' and <= '9') or '_');
                 return new Token.Int(i);
             }
             case '_' or (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'):

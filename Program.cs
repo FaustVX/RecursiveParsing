@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "5 < 2 ? 3 : rng() * 5 + 2";
+var input = "5 < 2 ? 3_000 : rng() * 5 + 2";
 
 var tokenizer = new Tokenizer(input);
 do
