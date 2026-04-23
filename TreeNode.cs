@@ -74,6 +74,42 @@ public sealed record class Id(string Name, Range Span, int Precedence) : TreeNod
     => PrintTreeImpl(input, indentation);
 }
 
+public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span, int Precedence) : TreeNode(Span, Precedence)
+{
+    public override Object Evaluate(Context ctx)
+    {
+        if (Function.Evaluate(ctx) is not Delegate func)
+            throw new RunTimeException();
+        var evaluatedArgs = Args.Select(arg => arg.Evaluate(ctx).Value).ToArray();
+        var result = func.DynamicInvoke(evaluatedArgs)!;
+        return Object.FromObject(result);
+    }
+
+    public override void Print(StringBuilder sb)
+    {
+        if (Function.Precedence < Precedence)
+            sb.Append('(');
+        Function.Print(sb);
+        if (Function.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append('(');
+        for (int i = 0; i < Args.Length; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            Args[i].Print(sb);
+        }
+        sb.Append(')');
+    }
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    {
+        PrintTreeImpl(input, indentation);
+        Function.PrintTree(input, indentation + 1);
+        foreach (var arg in Args)
+            arg.PrintTree(input, indentation + 1);
+    }
+}
+
 public abstract record class UnaryNode(TreeNode Node, Range Span, int Precedence) : TreeNode(Span, Precedence)
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
@@ -406,41 +442,5 @@ public sealed record class GreaterThanOrEqual(TreeNode Left, TreeNode Right, int
         Right.Print(sb);
         if (Right.Precedence < Precedence)
             sb.Append(')');
-    }
-}
-
-public sealed record class Invocation(TreeNode Function, ImmutableArray<TreeNode> Args, Range Span, int Precedence) : TreeNode(Span, Precedence)
-{
-    public override Object Evaluate(Context ctx)
-    {
-        if (Function.Evaluate(ctx) is not Delegate func)
-            throw new RunTimeException();
-        var evaluatedArgs = Args.Select(arg => arg.Evaluate(ctx).Value).ToArray();
-        var result = func.DynamicInvoke(evaluatedArgs)!;
-        return Object.FromObject(result);
-    }
-
-    public override void Print(StringBuilder sb)
-    {
-        if (Function.Precedence < Precedence)
-            sb.Append('(');
-        Function.Print(sb);
-        if (Function.Precedence < Precedence)
-            sb.Append(')');
-        sb.Append('(');
-        for (int i = 0; i < Args.Length; i++)
-        {
-            if (i > 0) sb.Append(", ");
-            Args[i].Print(sb);
-        }
-        sb.Append(')');
-    }
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    {
-        PrintTreeImpl(input, indentation);
-        Function.PrintTree(input, indentation + 1);
-        foreach (var arg in Args)
-            arg.PrintTree(input, indentation + 1);
     }
 }
