@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace RecursiveParsing;
 
 [Serializable]
@@ -95,20 +97,31 @@ public class Tokenizer(string input)
                 return new Token.Symbol(symbol);
             case '"': // string
             {
-                var input = _input;
-                length = 0;
-                do
+                length = 1;
+                _input += length;
+                var sb = new StringBuilder();
+                while (_input.First is not '"')
                 {
                     if (_input.IsEmpty)
                         throw new ExpectedTokenizerException(_i + length, '"');
+                    if (_input.First is '\\') // escaped
+                    {
+                        length++;
+                        _input++;
+                        if (_input.First is not ('"' or '\\' or 'r' or 'n' or 't' or '0'))
+                            throw new UnexpectedTokenizerException(_i + length, _input.First ?? '\0');
+                        Token.String.Unescape(_input.First!.Value, sb);
+                    }
+                    else
+                        sb.Append(_input.First!.Value);
                     length++;
                     _input++;
-                } while (_input.First is not '"');
+                }
                 length++;
                 _input++;
-                return new Token.String(input[1..(length - 1)].ToString());
+                return new Token.String(sb.ToString());
             }
-            case >= '0' and <= '9': // digit
+            case >= '0' and <= '9': // number
             {
                 length = 0;
                 int i = 0;

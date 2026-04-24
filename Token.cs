@@ -18,23 +18,55 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
         {
             var sb = new StringBuilder();
             foreach (var c in Value)
-                sb.Append(Escape(c));
+                sb.Append(Token.String.Escape([c]));
             return $"\"{sb}\"";
         }
-
-        private static string Escape(char c)
-        => c switch
-        {
-            '\n' => "\\n",
-            '\r' => "\\r",
-            '\t' => "\\t",
-            '\0' => "\\0",
-            _ => c.ToString(),
-        };
     }
     public readonly record struct Int(int Value);
     public readonly record struct Id(string Value);
-    public readonly record struct String(string Value);
+    public readonly record struct String(string Value)
+    {
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var c in Value)
+                sb.Append(Escape([c]));
+            return $"\"{sb}\"";
+        }
+
+        public static StringBuilder Escape(ReadOnlySpan<char> str)
+        {
+            var sb = new StringBuilder();
+            foreach (var c in str)
+            {
+                sb = c switch
+                {
+                    '"' => sb.Append("\\\""),
+                    '\\' => sb.Append("\\\\"),
+                    '\r' => sb.Append("\\r"),
+                    '\n' => sb.Append("\\n"),
+                    '\t' => sb.Append("\\t"),
+                    '\0' => sb.Append("\\0"),
+                    _ => sb.Append(c),
+                };
+            }
+            return sb;
+        }
+
+        public static void Unescape(char c, StringBuilder sb)
+        {
+            _ = c switch
+            {
+                '"' => sb.Append('"'),
+                '\\' => sb.Append('\\'),
+                'r' => sb.Append('\r'),
+                'n' => sb.Append('\n'),
+                't' => sb.Append('\t'),
+                '0' => sb.Append('\0'),
+                _ => sb.Append(c),
+            };
+        }
+    }
     public readonly record struct Symbol(Symbol.CharOrString Value)
     {
         public readonly union CharOrString(char, string);

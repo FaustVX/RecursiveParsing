@@ -40,7 +40,7 @@ public sealed record class String(string S, Range Span) : ExpressionNode(Span, N
     => S;
 
     public override void Print(StringBuilder sb)
-    => sb.Append('"').Append(S).Append('"');
+    => sb.Append('"').Append(Token.String.Escape(S)).Append('"');
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     => PrintTreeImpl(input, indentation, isTerminal: true);

@@ -4,7 +4,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "\"Hello\"+\"world!\" == \"Helloworld!\"";
+var input = (args is [var p,..] && File.Exists(p)) ? File.ReadAllText(p) : throw new Exception();
 
 var tokenizer = new Tokenizer(input);
 do
@@ -38,5 +38,6 @@ if (true && ((object)treeNode) is ExpressionNode expressionNode)
         new("abs", (Delegate)decimal.Abs),
         new("rng", (Delegate)new Random().NextDouble),
         new("round", (Delegate)((decimal d, decimal decimals) => decimal.Round(d, (int)decimals))),
+        new("len", (Delegate)((string s) => s.Length)),
         ]){ Outer = new([new("a", 3)]) }));
 }
