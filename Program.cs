@@ -5,7 +5,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "a == b ? c : d;";
+var input = "{a == b ? c : d;3;}";
 
 var tokenizer = new Tokenizer(input);
 do

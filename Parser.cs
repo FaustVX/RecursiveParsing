@@ -29,7 +29,9 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
 public partial class Parser
 {
     /// <summary>
-    /// • statement                 := expression-statement ";"
+    /// • statement                 := block-statement ";"
+    /// <br/>
+    /// • block-statement           := ("{" (statement)* "}") | expression-statement
     /// <br/>
     /// • expression-statement      := expression ";"
     /// </summary>

@@ -65,7 +65,7 @@ public sealed record class Invocation(ExpressionNode Function, ImmutableArray<Ex
         if (Function.Precedence < Precedence)
             sb.Append(')');
         sb.Append('(');
-        for (int i = 0; i < Args.Length; i++)
+        for (var i = 0; i < Args.Length; i++)
         {
             if (i > 0) sb.Append(", ");
             Args[i].Print(sb);
