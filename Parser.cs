@@ -8,10 +8,7 @@ public class ParserException(TokenSpan tokenSpan) : Exception
     public TokenSpan TokenSpan { get; } = tokenSpan;
 
     public override string ToString()
-    {
-        Console.Error.WriteLine($"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}");
-        return base.ToString();
-    }
+    => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
 }
 
 [Serializable]
@@ -20,10 +17,7 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
     public Token Expected { get; } = expected;
 
     public override string ToString()
-    {
-        Console.Error.WriteLine($"Expected token {Expected}");
-        return base.ToString();
-    }
+    => $"Expected token {Expected}\n" + base.ToString();
 }
 
 public partial class Parser

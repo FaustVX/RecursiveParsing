@@ -5,7 +5,7 @@ using RecursiveParsing;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "{a == b ? c : d;3;}";
+var input = "{a == b ? c : d;}";
 
 var tokenizer = new Tokenizer(input);
 do
@@ -42,5 +42,5 @@ else
         new("abs", (Delegate)decimal.Abs),
         new("rng", (Delegate)new Random().NextDouble),
         new("round", (Delegate)((decimal d, decimal decimals) => decimal.Round(d, (int)decimals))),
-        ])));
+        ]){ Outer = new([new("a", 3)]) }));
 }

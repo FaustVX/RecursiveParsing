@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -25,6 +26,15 @@ public readonly union RTObject(decimal, bool, Delegate)
 [Serializable]
 public class RunTimeException() : Exception;
 
+[Serializable]
+public class UnknownVariableRTException(string name) : RunTimeException
+{
+    public string Name { get; } = name;
+
+    public override string ToString()
+    => $"Unknown name: {Name}\n" + base.ToString();
+}
+
 public abstract record class TreeNode(Range Span)
 {
     private static readonly Dictionary<int, string> _indent = [];
@@ -45,5 +55,10 @@ public abstract record class TreeNode(Range Span)
 
 public class Context(params IEnumerable<KeyValuePair<string, RTObject>> variables)
 {
-    public FrozenDictionary<string, RTObject> Variables { get; } = variables.ToFrozenDictionary();
+    public Context? Outer { get; init; }
+    private readonly FrozenDictionary<string, RTObject> _variables = variables.ToFrozenDictionary();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RTObject Get(string name)
+    => _variables.TryGetValue(name, out var value) ? value : Outer?.Get(name) ?? throw new UnknownVariableRTException(name);
 }

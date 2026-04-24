@@ -37,7 +37,7 @@ public sealed record class Number(decimal I, Range Span) : ExpressionNode(Span, 
 public sealed record class Id(string Name, Range Span) : ExpressionNode(Span, NodePrecedence.Unary)
 {
     public override RTObject Evaluate(Context ctx)
-    => ctx.Variables[Name];
+    => ctx.Get(Name);
 
     public override void Print(StringBuilder sb)
     => sb.Append(Name);
