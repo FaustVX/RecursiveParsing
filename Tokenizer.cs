@@ -1,16 +1,27 @@
 namespace RecursiveParsing;
 
 [Serializable]
-public class TokenizerException(int pos, char @char) : Exception
+public abstract class TokenizerException(int pos) : Exception
 {
     public int Pos { get; } = pos;
-    public char Char { get; } = @char;
+}
+
+[Serializable]
+public class UnexpectedTokenizerException(int pos, char unexpected) : TokenizerException(pos)
+{
+    public char Unexpected { get; } = unexpected;
 
     public override string ToString()
-    {
-        Console.Error.WriteLine($"Unexpected token ({Char}) at pos: {Pos}");
-        return base.ToString();
-    }
+    => $"Unexpected token ({Unexpected}) at pos: {Pos}\n" + base.ToString();
+}
+
+[Serializable]
+public class ExpectedTokenizerException(int pos, char expected) : TokenizerException(pos)
+{
+    public char Expected { get; } = expected;
+
+    public override string ToString()
+    => $"Expected token ({Expected}) at pos: {Pos}\n" + base.ToString();
 }
 
 public class Tokenizer(string input)
@@ -38,11 +49,11 @@ public class Tokenizer(string input)
 
     public void ScanToken()
     {
-        var token = ScanTokenImpl(out var length) ?? throw new TokenizerException(_i, _input.First ?? '\0');
+        var token = ScanTokenImpl(out var length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
         var range = new Range(_i, _i += length);
         if (token is Token.WhiteSpace ws)
         {
-            token = ScanTokenImpl(out length) ?? throw new TokenizerException(_i, _input.First ?? '\0');
+            token = ScanTokenImpl(out length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
             range = new Range(_i, _i += length);
             NextTokenSpan = new(ws, token, range);
         }
@@ -82,6 +93,21 @@ public class Tokenizer(string input)
                 _input++;
                 length = 1;
                 return new Token.Symbol(symbol);
+            case '"': // string
+            {
+                var input = _input;
+                length = 0;
+                do
+                {
+                    if (_input.IsEmpty)
+                        throw new ExpectedTokenizerException(_i + length, '"');
+                    length++;
+                    _input++;
+                } while (_input.First is not '"');
+                length++;
+                _input++;
+                return new Token.String(input[1..(length - 1)].ToString());
+            }
             case >= '0' and <= '9': // digit
             {
                 length = 0;

@@ -136,7 +136,7 @@ public partial class Parser
     }
 
     /// <summary>
-    /// primary := ID | NUMBER | "(" expression ")"
+    /// primary := ID | NUMBER | STRING | "(" expression ")"
     /// </summary>
     private ExpressionNode ParsePrimary(Tokenizer tokenizer)
     {
@@ -154,6 +154,12 @@ public partial class Parser
                 var end = tokenizer.NextSpan.End;
                 tokenizer.ScanToken();
                 return new Number(i, start..end);
+            }
+            case Token.String { Value: var s }:
+            {
+                var end = tokenizer.NextSpan.End;
+                tokenizer.ScanToken();
+                return new String(s, start..end);
             }
             default:
                 if (tokenizer.TryConsume(new Token.Symbol { Value = '(' }))

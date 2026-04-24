@@ -72,7 +72,7 @@ public partial class Parser
     /// <br/>
     /// • postfix                   := primary ("!" | "(" args ")")*
     /// <br/>
-    /// • primary                   := ID | NUMBER | "(" expression ")"
+    /// • primary                   := ID | NUMBER | STRING | "(" expression ")"
     /// <br/>
     /// • args                      := ( expression ( "," expression)* )?
     /// </summary>

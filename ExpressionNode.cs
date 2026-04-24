@@ -34,6 +34,18 @@ public sealed record class Number(decimal I, Range Span) : ExpressionNode(Span, 
     => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
+public sealed record class String(string S, Range Span) : ExpressionNode(Span, NodePrecedence.Unary)
+{
+    public override RTObject Evaluate(Context ctx)
+    => S;
+
+    public override void Print(StringBuilder sb)
+    => sb.Append('"').Append(S).Append('"');
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation, isTerminal: true);
+}
+
 public sealed record class Id(string Name, Range Span) : ExpressionNode(Span, NodePrecedence.Unary)
 {
     public override RTObject Evaluate(Context ctx)

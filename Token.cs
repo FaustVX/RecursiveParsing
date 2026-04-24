@@ -10,7 +10,7 @@ public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Ra
     {}
 }
 
-public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.EOL) : IEquatable<Token>
+public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.String, Token.EOL) : IEquatable<Token>
 {
     public readonly record struct WhiteSpace(string Value)
     {
@@ -34,6 +34,7 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
     }
     public readonly record struct Int(int Value);
     public readonly record struct Id(string Value);
+    public readonly record struct String(string Value);
     public readonly record struct Symbol(Symbol.CharOrString Value)
     {
         public readonly union CharOrString(char, string);

@@ -18,6 +18,7 @@ public sealed record class Add(ExpressionNode Left, ExpressionNode Right) : Bina
     => (Left.Evaluate(ctx), Right.Evaluate(ctx)) switch
     {
         (decimal l, decimal r) => l + r,
+        (string l, string r) => l + r,
         _ => throw new RunTimeException(),
     };
 
@@ -144,6 +145,8 @@ public sealed record class Equal(ExpressionNode Left, ExpressionNode Right) : Bi
     {
         (decimal l, decimal r) => l == r,
         (bool l, bool r) => l == r,
+        (string l, string r) => l == r,
+        (Delegate l, Delegate r) => l == r,
         _ => throw new RunTimeException(),
     };
 
@@ -170,6 +173,8 @@ public sealed record class NotEqual(ExpressionNode Left, ExpressionNode Right) :
     {
         (decimal l, decimal r) => l != r,
         (bool l, bool r) => l != r,
+        (string l, string r) => l != r,
+        (Delegate l, Delegate r) => l != r,
         _ => throw new RunTimeException(),
     };
 

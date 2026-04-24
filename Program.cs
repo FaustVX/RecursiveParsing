@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using RecursiveParsing;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = "{a == b ? c : d;}";
+var input = "\"Hello\"+\"world!\" == \"Helloworld!\"";
 
 var tokenizer = new Tokenizer(input);
 do
@@ -14,26 +13,23 @@ do
     Console.WriteLine(tokenizer.NextTokenSpan.ToString());
 } while (tokenizer.NextToken is not (null or Token.EOL));
 
-var parser = new Parser();
-var treeNode = parser.ParseStatement(input);
+var parser = new Parser().ParseExpression;
+var treeNode = parser(input);
 if (treeNode is null)
     return;
 treeNode.PrintTree(input.AsSpan(), 0);
 var sb = new StringBuilder();
 treeNode.Print(sb);
 Console.Write(sb);
-if (false || ((object)treeNode) is not ExpressionNode expressionNode) // double parse
+if (true) // double parse
 {
-    Console.Write("\n");
-    ((object)treeNode switch
-    {
-        ExpressionNode => new Func<string, TreeNode>(parser.ParseExpression),
-        StatementNode => parser.ParseStatement,
-        _ => throw new UnreachableException(),
-    })(sb.ToString()).Print(sb.Clear());
+#pragma warning disable CS0162 // Unreachable code detected
+    Console.WriteLine();
+    parser(sb.ToString()).Print(sb.Clear());
     Console.Write(sb);
+#pragma warning restore CS0162 // Unreachable code detected
 }
-else
+if (true && ((object)treeNode) is ExpressionNode expressionNode)
 {
     Console.Write(" = ");
     Console.WriteLine(expressionNode.Evaluate(new([

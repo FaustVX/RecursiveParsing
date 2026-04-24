@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RecursiveParsing;
 
-public readonly union RTObject(decimal, bool, Delegate)
+public readonly union RTObject(decimal, bool, string, Delegate)
 {
     public static RTObject FromObject(object obj)
     => obj switch
@@ -16,6 +16,7 @@ public readonly union RTObject(decimal, bool, Delegate)
         double d => (decimal)d,
         decimal d => d,
         bool b => b,
+        string s => s,
         Delegate d => d,
         _ => throw new RunTimeException(),
     };
