@@ -1,0 +1,7 @@
+file := declaration*
+declaration := ID ":=" expression EOL+
+expression := choice
+choice := sequence ("|" sequence)*
+sequence := postfix+
+postfix := primary ("?" | "+" | "*")?
+primary := ID | TERMINAL | STRING | "(" expression ")"

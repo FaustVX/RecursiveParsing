@@ -23,26 +23,25 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
 public partial class Parser
 {
     /// <summary>
-    /// • statement                 := block-statement ";"
+    /// • file                      := declaration*
     /// <br/>
-    /// • block-statement           := ("{" (statement)* "}") | expression-statement
+    /// • declaration               := ID ":=" expression EOL+
     /// <br/>
-    /// • expression-statement      := expression ";"
     /// </summary>
-    public StatementNode ParseStatement(string input)
+    public File ParseFile(string input)
     {
         var tokenizer = new Tokenizer(input);
         tokenizer.ScanToken();
         var tree = Parse(tokenizer);
-        tokenizer.Expect(new Token.EOL());
+        tokenizer.Expect(new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        StatementNode Parse(Tokenizer tokenizer)
+        File Parse(Tokenizer tokenizer)
         {
             try
             {
-                return ParseStatement(tokenizer);
+                return ParseFile(tokenizer);
             }
             catch (ParserException ex)
             {
@@ -54,38 +53,26 @@ public partial class Parser
     }
 
     /// <summary>
-    /// • expression                := conditionnal
+    /// • expression                := choice
     /// <br/>
-    /// • conditionnal              := equation "?" expression ":" conditionnal
+    /// • choice                    := sequence ("|" sequence)*
     /// <br/>
-    /// • equation                  := relational (("==" | "!=") relational)?
+    /// • sequence                  := postfix+
     /// <br/>
-    /// • relational                := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?
+    /// • postfix                   := primary ("?" | "+" | "*")?
     /// <br/>
-    /// • additive                  := term (("+" | "-") term)*
-    /// <br/>
-    /// • term                      := unary (("*" | "/") unary)*
-    /// <br/>
-    /// • unary                     := ("+" | "-") unary | exponentiation
-    /// <br/>
-    /// • exponentiation            := postfix ("^" exponentiation)?
-    /// <br/>
-    /// • postfix                   := primary ("!" | "(" args ")")*
-    /// <br/>
-    /// • primary                   := ID | NUMBER | STRING | "(" expression ")"
-    /// <br/>
-    /// • args                      := ( expression ( "," expression)* )?
+    /// • primary                   := ID | TERMINAL | STRING | "(" expression ")"
     /// </summary>
-    public ExpressionNode ParseExpression(string input)
+    public Expression ParseExpression(string input)
     {
         var tokenizer = new Tokenizer(input);
         tokenizer.ScanToken();
         var tree = Parse(tokenizer);
-        tokenizer.Expect(new Token.EOL());
+        tokenizer.Expect(new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ExpressionNode Parse(Tokenizer tokenizer)
+        Expression Parse(Tokenizer tokenizer)
         {
             try
             {

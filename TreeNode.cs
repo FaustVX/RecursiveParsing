@@ -1,22 +1,17 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RecursiveParsing;
 
-public readonly union RTObject(decimal, bool, string, Delegate)
+public readonly union RTObject(Delegate)
 {
     public static RTObject FromObject(object obj)
     => obj switch
     {
         RTObject o => o,
-        int i => i,
-        float f => (decimal)f,
-        double d => (decimal)d,
-        decimal d => d,
-        bool b => b,
-        string s => s,
         Delegate d => d,
         _ => throw new RunTimeException(),
     };
@@ -62,4 +57,38 @@ public class Context(params IEnumerable<KeyValuePair<string, RTObject>> variable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RTObject Get(string name)
     => _variables.TryGetValue(name, out var value) ? value : Outer?.Get(name) ?? throw new UnknownVariableRTException(name);
+}
+
+public record class File(ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
+{
+    public override void Print(StringBuilder sb)
+    {
+        for (var i = 0; i < Declarations.Length; i++)
+            Declarations[i].Print(sb);
+    }
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    {
+        PrintTreeImpl(input, indentation, isTerminal: false);
+        foreach (var decl in Declarations)
+            decl.PrintTree(input, indentation + 1);
+    }
+}
+
+public record class Declaration(Id Id, Expression Expression, Range Span) : TreeNode(Span)
+{
+    public override void Print(StringBuilder sb)
+    {
+        Id.Print(sb);
+        sb.Append(" := ");
+        Expression.Print(sb);
+        sb.AppendLine();
+    }
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    {
+        PrintTreeImpl(input, indentation, isTerminal: false);
+        Id.PrintTree(input, indentation + 1);
+        Expression.PrintTree(input, indentation + 1);
+    }
 }

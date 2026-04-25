@@ -2,7 +2,7 @@ using System.Text;
 
 namespace RecursiveParsing;
 
-public abstract record class UnaryNode(ExpressionNode Node, Range Span, NodePrecedence Precedence) : ExpressionNode(Span, Precedence)
+public abstract record class UnaryNode(Expression Node, Range Span, NodePrecedence Precedence) : Expression(Span, Precedence)
 {
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     {
@@ -11,34 +11,21 @@ public abstract record class UnaryNode(ExpressionNode Node, Range Span, NodePrec
     }
 }
 
-public sealed record class Negate(ExpressionNode Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Unary)
+public sealed record class Optional(Expression Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Postfix)
 {
-    public override RTObject Evaluate(Context ctx)
-    => Node.Evaluate(ctx) is decimal d ? -d : throw new RunTimeException();
-
     public override void Print(StringBuilder sb)
     {
-        sb.Append('-');
         if (Node.Precedence < Precedence)
             sb.Append('(');
         Node.Print(sb);
         if (Node.Precedence < Precedence)
             sb.Append(')');
+        sb.Append('?');
     }
 }
 
-public sealed record class Factorial(ExpressionNode Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Postfix)
+public sealed record class Multiple(Expression Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Postfix)
 {
-    public override RTObject Evaluate(Context ctx)
-    => F(Node.Evaluate(ctx) is decimal d ? d : throw new RunTimeException());
-
-    static decimal F(decimal a)
-    => a switch
-    {
-        <= 1 => 1,
-        _ => a * F(a - 1),
-    };
-
     public override void Print(StringBuilder sb)
     {
         if (Node.Precedence < Precedence)
@@ -46,6 +33,19 @@ public sealed record class Factorial(ExpressionNode Node, Range Span) : UnaryNod
         Node.Print(sb);
         if (Node.Precedence < Precedence)
             sb.Append(')');
-        sb.Append('!');
+        sb.Append('+');
+    }
+}
+
+public sealed record class Any(Expression Node, Range Span) : UnaryNode(Node, Span, NodePrecedence.Postfix)
+{
+    public override void Print(StringBuilder sb)
+    {
+        if (Node.Precedence < Precedence)
+            sb.Append('(');
+        Node.Print(sb);
+        if (Node.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append('*');
     }
 }

@@ -5,43 +5,36 @@ namespace RecursiveParsing;
 public partial class Parser
 {
     /// <summary>
-    /// statement := block-statement
+    /// file := declaration*
     /// </summary>
-    private StatementNode ParseStatement(Tokenizer tokenizer)
-    => ParseBlockStatement(tokenizer);
-
-    /// <summary>
-    /// block-statement := ("{" (statement)* "}") | expression-statement
-    /// </summary>
-    private StatementNode ParseBlockStatement(Tokenizer tokenizer)
+    private File ParseFile(Tokenizer tokenizer)
     {
         var start = tokenizer.NextSpan.Start;
-        if (!tokenizer.TryConsume(new Token.Symbol { Value = '{' }))
-            return ParseExpressionStatement(tokenizer);
-        var statements = ParseStatements(tokenizer).ToImmutableArray();
+        var statements = ParseDeclarations(tokenizer).ToImmutableArray();
         var end = tokenizer.NextSpan.End;
-        tokenizer.Expect(new Token.Symbol { Value = '}' });
-        return new BlockStatement(statements, start..end);
+        return new File(statements, start..end);
 
-        IEnumerable<StatementNode> ParseStatements(Tokenizer tokenizer)
+        IEnumerable<Declaration> ParseDeclarations(Tokenizer tokenizer)
         {
-            if (tokenizer.NextToken is Token.Symbol { Value: '}' })
-                yield break;
-            var arg = ParseExpressionStatement(tokenizer);
-            yield return arg;
-            while (tokenizer.NextToken is not Token.Symbol { Value: '}' })
-                yield return ParseExpressionStatement(tokenizer);
+            while (tokenizer.NextToken is not Token.EOF)
+                yield return ParseDeclaration(tokenizer);
         }
     }
 
     /// <summary>
-    /// expression-statement := expression ";"
+    /// declaration := ID ":=" expression EOL+
     /// </summary>
-    private StatementNode ParseExpressionStatement(Tokenizer tokenizer)
+    private Declaration ParseDeclaration(Tokenizer tokenizer)
     {
+        var tokenSpan = tokenizer.NextTokenSpan;
+        var primary = ParsePrimary(tokenizer);
+        if (primary is not Id id)
+            throw new ParserException(tokenSpan);
+        tokenizer.Expect(new Token.Symbol { Value = ":=" });
         var expression = ParseExpression(tokenizer);
         var end = tokenizer.NextSpan.End;
-        tokenizer.Expect(new Token.Symbol { Value = ';' });
-        return new ExpressionStatement(expression, expression.Span.Start..end);
+        tokenizer.Expect(new Token.EOL());
+            while (tokenizer.TryConsume(new Token.EOL()));
+        return new Declaration(id, expression, tokenSpan.Span.Start..end);
     }
 }
