@@ -11,7 +11,7 @@ do
 {
     tokenizer.ScanToken();
     Console.WriteLine(tokenizer.NextTokenSpan.ToString());
-} while (tokenizer.NextToken is not (null or Token.EOL));
+} while (tokenizer.NextToken is not (null or Token.EOF));
 
 var parser = new Parser().ParseExpression;
 var treeNode = parser(input);

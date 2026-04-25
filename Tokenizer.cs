@@ -18,12 +18,13 @@ public class UnexpectedTokenizerException(int pos, char unexpected) : TokenizerE
 }
 
 [Serializable]
-public class ExpectedTokenizerException(int pos, char expected) : TokenizerException(pos)
+public class ExpectedTokenizerException(int pos, char expected, string actual) : TokenizerException(pos)
 {
     public char Expected { get; } = expected;
+    public string Actual { get; } = actual;
 
     public override string ToString()
-    => $"Expected token ({Expected}) at pos: {Pos}\n" + base.ToString();
+    => $"Expected token ({Expected}) but got ({Actual}) at pos: {Pos}\n" + base.ToString();
 }
 
 public class Tokenizer(string input)
@@ -67,9 +68,9 @@ public class Tokenizer(string input)
     {
         switch (_input.First)
         {
-            case null: // End of line
+            case null: // End of file
                 length = 0;
-                return new Token.EOL();
+                return new Token.EOF();
             case char ws when char.IsWhiteSpace(ws): // whitespace
             {
                 var input = _input;
@@ -102,8 +103,8 @@ public class Tokenizer(string input)
                 var sb = new StringBuilder();
                 while (_input.First is not '"')
                 {
-                    if (_input.IsEmpty)
-                        throw new ExpectedTokenizerException(_i + length, '"');
+                    if (_input.IsEmpty || _input.First is '\r' or '\n')
+                        throw new ExpectedTokenizerException(_i + length, '"', Token.String.Escape([_input.First ?? '\0']).ToString());
                     if (_input.First is '\\') // escaped
                     {
                         length++;

@@ -10,7 +10,7 @@ public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Ra
     {}
 }
 
-public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.String, Token.EOL) : IEquatable<Token>
+public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol, Token.String, Token.EOF) : IEquatable<Token>
 {
     public readonly record struct WhiteSpace(string Value)
     {
@@ -28,10 +28,10 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
     {
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder($$"""{{nameof(Token.String)}} { Value = """).Append('"');
             foreach (var c in Value)
                 sb.Append(Escape([c]));
-            return $"\"{sb}\"";
+            return sb.Append('"').Append(" }").ToString();
         }
 
         public static StringBuilder Escape(ReadOnlySpan<char> str)
@@ -74,7 +74,7 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
         public override string ToString()
         => $"{nameof(Symbol)} {{ Value = {Value.Value?.ToString()} }}";
     }
-    public readonly record struct EOL();
+    public readonly record struct EOF();
 
     public override string ToString()
     => Value?.ToString()!;
@@ -90,7 +90,7 @@ public readonly union Token(Token.WhiteSpace, Token.Int, Token.Id, Token.Symbol,
         (Token.Id { Value: var vl }, Token.Id { Value: var vr }) => vl == vr,
         (Token.Symbol { Value: string vl }, Token.Symbol { Value: string vr }) => vl == vr,
         (Token.Symbol { Value: char vl }, Token.Symbol { Value: char vr }) => vl == vr,
-        (Token.EOL, Token.EOL) => true,
+        (Token.EOF, Token.EOF) => true,
         _ => false,
     };
 

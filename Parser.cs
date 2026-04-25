@@ -34,7 +34,7 @@ public partial class Parser
         var tokenizer = new Tokenizer(input);
         tokenizer.ScanToken();
         var tree = Parse(tokenizer);
-        tokenizer.Expect(new Token.EOL());
+        tokenizer.Expect(new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,7 +81,7 @@ public partial class Parser
         var tokenizer = new Tokenizer(input);
         tokenizer.ScanToken();
         var tree = Parse(tokenizer);
-        tokenizer.Expect(new Token.EOL());
+        tokenizer.Expect(new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
