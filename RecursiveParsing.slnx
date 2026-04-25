@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/lib/" >
+    <Project Path="lib/ebnf/RecursiveParsing.csproj" />
+  </Folder>
   <Project Path="RecursiveParsing.csproj" />
 </Solution>

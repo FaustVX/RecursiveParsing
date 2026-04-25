@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿extern alias EBNF;
+
+using System.Text;
 using RecursiveParsing;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk

@@ -1,0 +1,4 @@
+[submodule "lib/ebnf"]
+	path = lib/ebnf
+	url = file://C:/Users/jonat/Downloads/Development/.NET/RecursiveParsing/.git
+	branch = features/parse-ebnf
