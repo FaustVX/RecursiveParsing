@@ -83,26 +83,41 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
     public bool Equals(Token token)
     => (this, token) switch
     {
+        (Token.WhiteSpace, Token.WhiteSpace { Value: null }) => true,
+        (Token.WhiteSpace, not Token.WhiteSpace) => false,
         (Token.WhiteSpace { Value: var vl }, Token.WhiteSpace { Value: var vr }) => vl == vr,
+        (Token.Id, Token.Id { Value: null }) => true,
+        (Token.Id, not Token.Id) => false,
         (Token.Id { Value: var vl }, Token.Id { Value: var vr }) => vl == vr,
+        (Token.Terminal, Token.Terminal { Value: null }) => true,
+        (Token.Terminal, not Token.Terminal) => false,
+        (Token.Terminal { Value: var vl }, Token.Terminal { Value: var vr }) => vl == vr,
+        (Token.Symbol, Token.Symbol { Value: null }) => true,
+        (Token.Symbol, not Token.Symbol) => false,
         (Token.Symbol { Value: string vl }, Token.Symbol { Value: string vr }) => vl == vr,
         (Token.Symbol { Value: char vl }, Token.Symbol { Value: char vr }) => vl == vr,
+        (Token.Symbol, Token.Symbol) => false,
+        (Token.String, Token.String { Value: null }) => true,
+        (Token.String, not Token.String) => false,
+        (Token.String { Value: var vl }, Token.String { Value: var vr }) => vl == vr,
+        (Token.EOL, not Token.EOL) => false,
         (Token.EOL, Token.EOL) => true,
+        (Token.EOF, not Token.EOF) => false,
         (Token.EOF, Token.EOF) => true,
-        _ => false,
+        (null, _) => false,
     };
 
     public string TokenString()
     => this switch
     {
-        Token.WhiteSpace { Value: var v } => v,
-        Token.Id { Value: var v } => v,
-        Token.Terminal { Value: var v } => v,
+        Token.WhiteSpace { Value: string v } => v,
+        Token.Id { Value: string v } => v,
+        Token.Terminal { Value: string v } => v,
         Token.Symbol { Value: string v } => v,
         Token.Symbol { Value: char v } => v.ToString(),
-        Token.String { Value: var v } => $"\"{v}\"",
+        Token.String { Value: string v } => $"\"{v}\"",
         Token.EOL => "\\n",
-        Token.EOF or null => "",
+        Token.WhiteSpace or Token.Id or Token.Terminal or Token.Symbol or Token.String or Token.EOF or null => "",
     };
 
     public override bool Equals([NotNullWhen(true)] object? obj)

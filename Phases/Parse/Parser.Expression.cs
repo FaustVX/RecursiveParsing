@@ -17,7 +17,7 @@ public partial class Parser
     {
         var choices = ParseSequences(tokenizer).ToImmutableArray();
         if (choices is [])
-            throw new ParserException(default);
+            throw new ParserUnexpectedException(default);
         if (choices is [var expr])
             return expr;
         return new Choice(choices);
@@ -37,7 +37,7 @@ public partial class Parser
     {
         var sequences = ParsePostfixes(tokenizer).ToImmutableArray();
         if (sequences is [])
-            throw new ParserException(default);
+            throw new ParserUnexpectedException(default);
         if (sequences is [var expr])
             return expr;
         return new Sequence(sequences);
@@ -101,7 +101,7 @@ public partial class Parser
                     Expect(tokenizer, new Token.Symbol { Value = ')' });
                     return tree with { Span = start..end };
                 }
-                throw new ParserException(tokenizer.NextTokenSpan);
+                throw new ParserUnexpectedException(tokenizer.NextTokenSpan);
         };
     }
 }

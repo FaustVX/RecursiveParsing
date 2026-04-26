@@ -28,14 +28,12 @@ public partial class Parser
     private Declaration ParseDeclaration(Tokenizer tokenizer)
     {
         var tokenSpan = tokenizer.NextTokenSpan;
-        var primary = ParsePrimary(tokenizer);
-        if (primary is not Id id)
-            throw new ParserException(tokenSpan);
+        Expect(tokenizer, new Token.Id(), out var id);
         Expect(tokenizer, new Token.Symbol { Value = ":=" });
         var expression = ParseExpression(tokenizer);
         var end = tokenizer.NextSpan.End;
         Expect(tokenizer, new Token.EOL());
             while (TryConsume(tokenizer, new Token.EOL()));
-        return new Declaration(id, expression, tokenSpan.Span.Start..end);
+        return new Declaration(new Id(id.Token.TokenString(), id.Span), expression, tokenSpan.Span.Start..end);
     }
 }

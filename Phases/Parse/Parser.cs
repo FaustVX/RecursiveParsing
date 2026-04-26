@@ -4,10 +4,14 @@ using RecursiveParsing.Phases.Tokenize;
 namespace RecursiveParsing.Phases.Parse;
 
 [Serializable]
-public class ParserException(TokenSpan tokenSpan) : Exception
+public abstract class ParserException(TokenSpan tokenSpan) : Exception
 {
     public TokenSpan TokenSpan { get; } = tokenSpan;
+}
 
+[Serializable]
+public class ParserUnexpectedException(TokenSpan tokenSpan) : ParserException(tokenSpan)
+{
     public override string ToString()
     => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
 }
@@ -18,7 +22,7 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
     public Token Expected { get; } = expected;
 
     public override string ToString()
-    => $"Expected token {Expected}\n" + base.ToString();
+    => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
 }
 
 public partial class Parser(string input)
@@ -89,7 +93,11 @@ public partial class Parser(string input)
     }
 
     public static void Expect(Tokenizer tokenizer, Token token)
+    => Expect(tokenizer, token, out _);
+
+    public static void Expect(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
     {
+        tokenSpan = tokenizer.NextTokenSpan;
         if (tokenizer.NextToken != token)
             throw new ParserExpectedException(tokenizer.NextTokenSpan, token);
         tokenizer.ScanToken();
