@@ -1,6 +1,6 @@
 namespace System.Runtime.CompilerServices;
 
-public interface IUnion
+interface IUnion
 {
     public object Value { get; }
 }
