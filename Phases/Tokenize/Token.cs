@@ -28,10 +28,10 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
     {
         public override string ToString()
         {
-            var sb = new StringBuilder($$"""{{nameof(Token.String)}} { Value = """);
+            var sb = new StringBuilder($$"""{{nameof(Token.String)}} { Value = """).Append('"');
             foreach (var c in Value)
                 sb.Append(Escape([c]));
-            return sb.Append(" }").ToString();
+            return sb.Append('"').Append(" }").ToString();
         }
 
         public static StringBuilder Escape(ReadOnlySpan<char> str)
