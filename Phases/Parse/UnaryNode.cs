@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Parse;
 
 public abstract record class UnaryNode(Expression Node, Range Span, NodePrecedence Precedence) : Expression(Span, Precedence)
 {

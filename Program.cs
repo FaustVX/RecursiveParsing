@@ -1,5 +1,6 @@
 ﻿using System.Text;
-using RecursiveParsing;
+using RecursiveParsing.Phases.Parse;
+using RecursiveParsing.Phases.Tokenize;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/

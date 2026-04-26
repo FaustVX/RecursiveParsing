@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
+using RecursiveParsing.Phases.Tokenize;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Parse;
 public partial class Parser
 {
     /// <summary>

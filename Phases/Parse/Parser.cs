@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
+using RecursiveParsing.Phases.Tokenize;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Parse;
 
 [Serializable]
 public class ParserException(TokenSpan tokenSpan) : Exception

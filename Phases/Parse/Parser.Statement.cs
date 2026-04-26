@@ -1,7 +1,8 @@
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
 using System.Collections.Immutable;
+using RecursiveParsing.Phases.Tokenize;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Parse;
 public partial class Parser
 {
     /// <summary>

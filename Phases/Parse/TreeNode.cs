@@ -1,10 +1,8 @@
-using System.Collections.Frozen;
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Parse;
 
 [Serializable]
 public class RunTimeException() : Exception;

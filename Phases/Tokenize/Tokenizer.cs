@@ -1,6 +1,7 @@
 using System.Text;
+using RecursiveParsing.Phases.Parse;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Phases.Tokenize;
 
 [Serializable]
 public abstract class TokenizerException(int pos) : Exception
