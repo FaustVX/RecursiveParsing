@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using RecursiveParsing.Phases.Parse;
 using RecursiveParsing.Phases.Tokenize;
 using RecursiveParsing.Visitors;
@@ -8,8 +7,8 @@ using RecursiveParsing.Visitors;
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p,..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = Print.Tree;
-var doubleParseSteps = Print.None;
+var printSteps = Print.Pretty;
+var doubleParseSteps = Print.Pretty;
 
 TreeNode? treeNode = null;
 var sb = Parse(input, ref treeNode, printSteps);
@@ -17,12 +16,12 @@ var sb = Parse(input, ref treeNode, printSteps);
 if (doubleParseSteps != Print.None)
 {
     Console.WriteLine("Double parsing...");
-    input = sb.ToString();
+    input = sb;
     sb = Parse(input, ref treeNode, doubleParseSteps);
-    Debug.Assert(input == sb.ToString());
+    Debug.Assert(input == sb);
 }
 
-static StringBuilder Parse(string input, ref TreeNode? treeNode, Print mode)
+static string Parse(string input, ref TreeNode? treeNode, Print mode)
 {
     if (mode.HasFlag(Print.Tokens))
         PrintTokens(input);
@@ -35,12 +34,9 @@ static StringBuilder Parse(string input, ref TreeNode? treeNode, Print mode)
     };
     if (mode.HasFlag(Print.Tree))
         PrintTree(input, treeNode);
-
-    var sb = new StringBuilder();
-    treeNode.Print(sb);
     if (mode.HasFlag(Print.Pretty))
-        PrettyPrint(sb);
-    return sb;
+        return PrettyPrint(treeNode);
+    return "";
 }
 
 static void PrintTokens(string input)
@@ -60,9 +56,13 @@ static void PrintTree(string input, TreeNode treeNode)
     Console.WriteLine();
 }
 
-static void PrettyPrint(StringBuilder sb)
+static string PrettyPrint(TreeNode node)
 {
-    Console.WriteLine(sb);
+    var visitor = new PrettyPrintVisitor();
+    node.Accept(visitor);
+    string value = visitor.StringBuilder.ToString();
+    Console.WriteLine(value);
+    return value;
 }
 
 [Flags]
