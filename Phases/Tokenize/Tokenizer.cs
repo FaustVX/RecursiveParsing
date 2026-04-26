@@ -29,9 +29,9 @@ public class ExpectedTokenizerException(int pos, char expected, char actual) : T
 
 public class Tokenizer(string input)
 {
-    public Token NextToken => NextTokenSpan.Token;
-    public Range NextSpan => NextTokenSpan.Span;
-    public TokenSpan NextTokenSpan { get; private set; } = new(new Token.WhiteSpace(""), 0..0);
+    public Token CurrentToken => CurrentTokenSpan.Token;
+    public Range CurrentSpan => CurrentTokenSpan.Span;
+    public TokenSpan CurrentTokenSpan { get; private set; } = new(new Token.WhiteSpace(""), 0..0);
     private ReadOnlyMemory<char> _input = input.AsMemory();
     private int _i = 0;
 
@@ -43,10 +43,10 @@ public class Tokenizer(string input)
         {
             token = ScanTokenImpl(out length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
             range = new Range(_i, _i += length);
-            NextTokenSpan = new(ws, token, range);
+            CurrentTokenSpan = new(ws, token, range);
         }
         else
-            NextTokenSpan = new(new(""), token, range);
+            CurrentTokenSpan = new(new(""), token, range);
     }
 
     private Token? ScanTokenImpl(out int length)

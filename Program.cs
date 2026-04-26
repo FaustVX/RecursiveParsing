@@ -16,8 +16,8 @@ if (printSteps.HasFlag(Print.Tokens)) // print tokens
     do
     {
         tokenizer.ScanToken();
-        Console.WriteLine(tokenizer.NextTokenSpan.ToString());
-    } while (tokenizer.NextToken is not (null or Token.EOF));
+        Console.WriteLine(tokenizer.CurrentTokenSpan.ToString());
+    } while (tokenizer.CurrentToken is not (null or Token.EOF));
     Console.WriteLine();
 }
 
@@ -42,8 +42,8 @@ if (doubleParseSteps != Print.None) // double parse
         do
         {
             tokenizer.ScanToken();
-            Console.WriteLine(tokenizer.NextTokenSpan.ToString());
-        } while (tokenizer.NextToken is not (null or Token.EOF));
+            Console.WriteLine(tokenizer.CurrentTokenSpan.ToString());
+        } while (tokenizer.CurrentToken is not (null or Token.EOF));
         Console.WriteLine();
     }
     treeNode = treeNode switch
