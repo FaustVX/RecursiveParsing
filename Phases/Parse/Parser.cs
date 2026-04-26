@@ -21,20 +21,21 @@ public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : Pars
     => $"Expected token {Expected}\n" + base.ToString();
 }
 
-public partial class Parser
+public partial class Parser(string input)
 {
+    public Tokenizer Tokenizer { get; } = new(input);
+
     /// <summary>
     /// • file                      := declaration*
     /// <br/>
     /// • declaration               := ID ":=" expression EOL+
     /// <br/>
     /// </summary>
-    public File ParseFile(string input)
+    public File ParseFile()
     {
-        var tokenizer = new Tokenizer(input);
-        tokenizer.ScanToken();
-        var tree = Parse(tokenizer);
-        Expect(tokenizer, new Token.EOF());
+        Tokenizer.ScanToken();
+        var tree = Parse(Tokenizer);
+        Expect(Tokenizer, new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,12 +65,11 @@ public partial class Parser
     /// <br/>
     /// • primary                   := ID | TERMINAL | STRING | "(" expression ")"
     /// </summary>
-    public Expression ParseExpression(string input)
+    public Expression ParseExpression()
     {
-        var tokenizer = new Tokenizer(input);
-        tokenizer.ScanToken();
-        var tree = Parse(tokenizer);
-        Expect(tokenizer, new Token.EOF());
+        Tokenizer.ScanToken();
+        var tree = Parse(Tokenizer);
+        Expect(Tokenizer, new Token.EOF());
         return tree;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
