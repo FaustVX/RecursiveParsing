@@ -12,6 +12,7 @@ var doubleParseSteps = Print.Pretty;
 
 TreeNode? treeNode = null;
 var sb = Parse(input, ref treeNode, printSteps);
+treeNode!.Accept(new CheckIdentifierVisitor());
 
 if (doubleParseSteps != Print.None)
 {
