@@ -1,4 +1,4 @@
-namespace RecursiveParsing;
+namespace EBNFParser;
 
 static class Ext
 {

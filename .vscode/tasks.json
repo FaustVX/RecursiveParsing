@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/RecursiveParsing.csproj",
+                "${workspaceFolder}/EBNFParser.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -23,7 +23,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/RecursiveParsing.csproj",
+                "${workspaceFolder}/EBNFParser.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -37,7 +37,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/RecursiveParsing.csproj"
+                "${workspaceFolder}/EBNFParser.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

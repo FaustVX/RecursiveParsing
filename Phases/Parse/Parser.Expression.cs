@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
-using RecursiveParsing.Phases.Tokenize;
+using EBNFParser.Phases.Tokenize;
 
-namespace RecursiveParsing.Phases.Parse;
+namespace EBNFParser.Phases.Parse;
 public partial class Parser
 {
     /// <summary>

@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text;
-using RecursiveParsing.Phases.Parse;
-using RecursiveParsing.Phases.Tokenize;
+using EBNFParser.Phases.Parse;
+using EBNFParser.Phases.Tokenize;
 
-namespace RecursiveParsing.Visitors;
+namespace EBNFParser.Visitors;
 
 class PrettyPrintVisitor : IVisitor
 {

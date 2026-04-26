@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using RecursiveParsing.Phases.Parse;
-using RecursiveParsing.Phases.Tokenize;
-using RecursiveParsing.Visitors;
+using EBNFParser.Phases.Parse;
+using EBNFParser.Phases.Tokenize;
+using EBNFParser.Visitors;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
@@ -28,7 +28,7 @@ static string Parse(string input, ref TreeNode? treeNode, Print mode)
         PrintTokens(input);
     treeNode = treeNode switch
     {
-        RecursiveParsing.Phases.Parse.File => new Parser(input).ParseFile(),
+        EBNFParser.Phases.Parse.File => new Parser(input).ParseFile(),
         Expression => new Parser(input).ParseExpression(),
         null => new Parser(input).ParseFile(),
         _ => throw new UnreachableException(),

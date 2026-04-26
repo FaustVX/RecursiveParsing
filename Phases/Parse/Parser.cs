@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using RecursiveParsing.Phases.Tokenize;
+using EBNFParser.Phases.Tokenize;
 
-namespace RecursiveParsing.Phases.Parse;
+namespace EBNFParser.Phases.Parse;
 
 [Serializable]
 public abstract class ParserException(TokenSpan tokenSpan) : Exception

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace RecursiveParsing.Phases.Tokenize;
+namespace EBNFParser.Phases.Tokenize;
 
 public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Range Span)
 {

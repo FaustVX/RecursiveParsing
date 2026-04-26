@@ -1,8 +1,8 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
-using RecursiveParsing.Phases.Parse;
+using EBNFParser.Phases.Parse;
 
-namespace RecursiveParsing.Visitors;
+namespace EBNFParser.Visitors;
 
 [Serializable]
 public abstract class CheckIdentifierVisitorException : Exception;

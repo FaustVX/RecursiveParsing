@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace RecursiveParsing.Phases.Parse;
+namespace EBNFParser.Phases.Parse;
 
 [Serializable]
 public class RunTimeException() : Exception;

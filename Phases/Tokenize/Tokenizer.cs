@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace RecursiveParsing.Phases.Tokenize;
+namespace EBNFParser.Phases.Tokenize;
 
 [Serializable]
 public abstract class TokenizerException(int pos) : Exception

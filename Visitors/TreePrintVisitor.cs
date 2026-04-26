@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using RecursiveParsing.Phases.Parse;
+using EBNFParser.Phases.Parse;
 
-namespace RecursiveParsing.Visitors;
+namespace EBNFParser.Visitors;
 
 class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
 {
