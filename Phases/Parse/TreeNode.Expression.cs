@@ -39,6 +39,14 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
         foreach (var expr in Expressions)
             expr.PrintTree(input, indentation + 1);
     }
+
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        foreach (var expr in Expressions)
+            expr.Accept(visitor);
+        visitor.Exit(this);
+    }
 }
 
 /// <summary>
@@ -65,6 +73,14 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
         foreach (var expr in Expressions)
             expr.PrintTree(input, indentation + 1);
     }
+
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        foreach (var expr in Expressions)
+            expr.Accept(visitor);
+        visitor.Exit(this);
+    }
 }
 
 /// <summary>
@@ -87,6 +103,13 @@ public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : E
             sb.Append(')');
         sb.Append(Operator.Token.TokenString());
     }
+
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        Node.Accept(visitor);
+        visitor.Exit(this);
+    }
 }
 
 public sealed record class String(string S, Range Span) : Expression(Span, NodePrecedence.Primary)
@@ -96,6 +119,9 @@ public sealed record class String(string S, Range Span) : Expression(Span, NodeP
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     => PrintTreeImpl(input, indentation, isTerminal: true);
+
+    public override void Accept(IVisitor visitor)
+    => visitor.Visit(this);
 }
 
 public sealed record class Id(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
@@ -105,6 +131,9 @@ public sealed record class Id(string Name, Range Span) : Expression(Span, NodePr
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     => PrintTreeImpl(input, indentation, isTerminal: true);
+
+    public override void Accept(IVisitor visitor)
+    => visitor.Visit(this);
 }
 
 public sealed record class Terminal(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
@@ -114,4 +143,7 @@ public sealed record class Terminal(string Name, Range Span) : Expression(Span, 
 
     public override void PrintTree(ReadOnlySpan<char> input, int indentation)
     => PrintTreeImpl(input, indentation, isTerminal: true);
+
+    public override void Accept(IVisitor visitor)
+    => visitor.Visit(this);
 }
