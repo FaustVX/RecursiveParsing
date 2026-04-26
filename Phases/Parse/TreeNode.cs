@@ -36,19 +36,6 @@ public interface IVisitor
 public abstract record class TreeNode(Range Span)
 {
     public abstract void Print(StringBuilder sb);
-    public abstract void PrintTree(ReadOnlySpan<char> input, int indentation = 0);
-    private static readonly Dictionary<int, string> _indent = [];
-    protected string IndentSpaces(int depth)
-    {
-        ref var indent = ref CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
-        if (exists)
-            return indent!;
-        var s = (stackalloc char[depth * 2]);
-        s.Fill(' ');
-        return indent = new string(s);
-    }
-    protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation, bool isTerminal)
-    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}{(isTerminal ? "" : ":")}");
     public abstract void Accept(IVisitor visitor);
 }
 
@@ -61,13 +48,6 @@ public record class File(ImmutableArray<Declaration> Declarations, Range Span) :
     {
         for (var i = 0; i < Declarations.Length; i++)
             Declarations[i].Print(sb);
-    }
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    {
-        PrintTreeImpl(input, indentation, isTerminal: false);
-        foreach (var decl in Declarations)
-            decl.PrintTree(input, indentation + 1);
     }
 
     public override void Accept(IVisitor visitor)
@@ -90,13 +70,6 @@ public record class Declaration(Id Id, Expression Expression, Range Span) : Tree
         sb.Append(" := ");
         Expression.Print(sb);
         sb.AppendLine();
-    }
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    {
-        PrintTreeImpl(input, indentation, isTerminal: false);
-        Id.PrintTree(input, indentation + 1);
-        Expression.PrintTree(input, indentation + 1);
     }
 
     public override void Accept(IVisitor visitor)

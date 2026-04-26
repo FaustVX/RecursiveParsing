@@ -33,13 +33,6 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
         }
     }
 
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation = 0)
-    {
-        PrintTreeImpl(input, indentation, isTerminal: false);
-        foreach (var expr in Expressions)
-            expr.PrintTree(input, indentation + 1);
-    }
-
     public override void Accept(IVisitor visitor)
     {
         visitor.Enter(this);
@@ -67,13 +60,6 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
         }
     }
 
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation = 0)
-    {
-        PrintTreeImpl(input, indentation, isTerminal: false);
-        foreach (var expr in Expressions)
-            expr.PrintTree(input, indentation + 1);
-    }
-
     public override void Accept(IVisitor visitor)
     {
         visitor.Enter(this);
@@ -88,12 +74,6 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
 /// </summary>
 public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : Expression(Span, NodePrecedence.Postfix)
 {
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    {
-        PrintTreeImpl(input, indentation, isTerminal: false);
-        Node.PrintTree(input, indentation + 1);
-    }
-
     public override void Print(StringBuilder sb)
     {
         if (Node.Precedence < Precedence)
@@ -117,9 +97,6 @@ public sealed record class String(string S, Range Span) : Expression(Span, NodeP
     public override void Print(StringBuilder sb)
     => sb.Append('"').Append(Token.String.Escape(S)).Append('"');
 
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
-
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);
 }
@@ -129,9 +106,6 @@ public sealed record class Id(string Name, Range Span) : Expression(Span, NodePr
     public override void Print(StringBuilder sb)
     => sb.Append(Name);
 
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
-
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);
 }
@@ -140,9 +114,6 @@ public sealed record class Terminal(string Name, Range Span) : Expression(Span, 
 {
     public override void Print(StringBuilder sb)
     => sb.Append(Name);
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
 
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);

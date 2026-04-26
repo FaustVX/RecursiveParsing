@@ -2,13 +2,14 @@
 using System.Text;
 using RecursiveParsing.Phases.Parse;
 using RecursiveParsing.Phases.Tokenize;
+using RecursiveParsing.Visitors;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p,..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = Print.All;
-var doubleParseSteps = Print.All;
+var printSteps = Print.Tree;
+var doubleParseSteps = Print.None;
 
 TreeNode? treeNode = null;
 var sb = Parse(input, ref treeNode, printSteps);
@@ -55,7 +56,7 @@ static void PrintTokens(string input)
 
 static void PrintTree(string input, TreeNode treeNode)
 {
-    treeNode.PrintTree(input.AsSpan(), 0);
+    treeNode.Accept(new TreePrintVisitor(input.AsMemory()));
     Console.WriteLine();
 }
 
