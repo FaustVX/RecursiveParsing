@@ -25,7 +25,7 @@ public partial class Parser
         IEnumerable<Expression> ParseSequences(Tokenizer tokenizer)
         {
             yield return ParseSequence(tokenizer);
-            while (tokenizer.TryConsume(new Token.Symbol { Value = '|' }))
+            while (TryConsume(tokenizer, new Token.Symbol { Value = '|' }))
                 yield return ParseSequence(tokenizer);
         }
     }
@@ -58,11 +58,11 @@ public partial class Parser
         var start = tokenizer.NextSpan.Start;
         var tree = ParsePrimary(tokenizer);
         var end = tokenizer.NextSpan.End;
-        if (tokenizer.TryConsume(new Token.Symbol { Value = '?' }))
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '?' }))
             return new Optional(tree, start..end);
-        if (tokenizer.TryConsume(new Token.Symbol { Value = '+' }))
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '+' }))
             return new Multiple(tree, start..end);
-        if (tokenizer.TryConsume(new Token.Symbol { Value = '*' }))
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '*' }))
             return new Any(tree, start..end);
         return tree;
     }
@@ -94,11 +94,11 @@ public partial class Parser
                 return new String(s, start..end);
             }
             default:
-                if (tokenizer.TryConsume(new Token.Symbol { Value = '(' }))
+                if (TryConsume(tokenizer, new Token.Symbol { Value = '(' }))
                 {
                     var tree = ParseExpression(tokenizer);
                     var end = tokenizer.NextSpan.End;
-                    tokenizer.Expect(new Token.Symbol { Value = ')' });
+                    Expect(tokenizer, new Token.Symbol { Value = ')' });
                     return tree with { Span = start..end };
                 }
                 throw new ParserException(tokenizer.NextTokenSpan);

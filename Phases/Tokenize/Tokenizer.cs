@@ -1,5 +1,4 @@
 using System.Text;
-using RecursiveParsing.Phases.Parse;
 
 namespace RecursiveParsing.Phases.Tokenize;
 
@@ -35,21 +34,6 @@ public class Tokenizer(string input)
     public TokenSpan NextTokenSpan { get; private set; } = new(new Token.WhiteSpace(""), 0..0);
     private ReadOnlyMemory<char> _input = input.AsMemory();
     private int _i = 0;
-
-    public void Expect(Token token)
-    {
-        if (NextToken != token)
-            throw new ParserExpectedException(NextTokenSpan, token);
-        ScanToken();
-    }
-
-    public bool TryConsume(Token token)
-    {
-        if (NextToken != token)
-            return false;
-        ScanToken();
-        return true;
-    }
 
     public void ScanToken()
     {

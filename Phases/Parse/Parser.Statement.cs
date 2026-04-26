@@ -31,11 +31,11 @@ public partial class Parser
         var primary = ParsePrimary(tokenizer);
         if (primary is not Id id)
             throw new ParserException(tokenSpan);
-        tokenizer.Expect(new Token.Symbol { Value = ":=" });
+        Expect(tokenizer, new Token.Symbol { Value = ":=" });
         var expression = ParseExpression(tokenizer);
         var end = tokenizer.NextSpan.End;
-        tokenizer.Expect(new Token.EOL());
-            while (tokenizer.TryConsume(new Token.EOL()));
+        Expect(tokenizer, new Token.EOL());
+            while (TryConsume(tokenizer, new Token.EOL()));
         return new Declaration(id, expression, tokenSpan.Span.Start..end);
     }
 }
