@@ -10,7 +10,39 @@ var input = (args is [var p,..] && System.IO.File.Exists(p)) ? System.IO.File.Re
 var printSteps = Print.All;
 var doubleParseSteps = Print.All;
 
-if (printSteps.HasFlag(Print.Tokens)) // print tokens
+TreeNode? treeNode = null;
+var sb = Parse(input, ref treeNode, printSteps);
+
+if (doubleParseSteps != Print.None)
+{
+    Console.WriteLine("Double parsing...");
+    input = sb.ToString();
+    sb = Parse(input, ref treeNode, doubleParseSteps);
+    Debug.Assert(input == sb.ToString());
+}
+
+static StringBuilder Parse(string input, ref TreeNode? treeNode, Print mode)
+{
+    if (mode.HasFlag(Print.Tokens))
+        PrintTokens(input);
+    treeNode = treeNode switch
+    {
+        RecursiveParsing.Phases.Parse.File => new Parser(input).ParseFile(),
+        Expression => new Parser(input).ParseExpression(),
+        null => new Parser(input).ParseFile(),
+        _ => throw new UnreachableException(),
+    };
+    if (mode.HasFlag(Print.Tree))
+        PrintTree(input, treeNode);
+
+    var sb = new StringBuilder();
+    treeNode.Print(sb);
+    if (mode.HasFlag(Print.Pretty))
+        PrettyPrint(sb);
+    return sb;
+}
+
+static void PrintTokens(string input)
 {
     var tokenizer = new Tokenizer(input);
     do
@@ -21,45 +53,15 @@ if (printSteps.HasFlag(Print.Tokens)) // print tokens
     Console.WriteLine();
 }
 
-TreeNode treeNode = new Parser(input).ParseFile();
-if (printSteps.HasFlag(Print.Tree)) // print tree
+static void PrintTree(string input, TreeNode treeNode)
 {
     treeNode.PrintTree(input.AsSpan(), 0);
     Console.WriteLine();
 }
 
-var sb = new StringBuilder();
-treeNode.Print(sb);
-if (printSteps.HasFlag(Print.Pretty)) // pretty-print
-    Console.WriteLine(sb);
-if (doubleParseSteps != Print.None) // double parse
+static void PrettyPrint(StringBuilder sb)
 {
-    input = sb.ToString();
-
-    if (doubleParseSteps.HasFlag(Print.Tokens)) // print tokens
-    {
-        var tokenizer = new Tokenizer(input);
-        do
-        {
-            tokenizer.ScanToken();
-            Console.WriteLine(tokenizer.CurrentTokenSpan.ToString());
-        } while (tokenizer.CurrentToken is not (null or Token.EOF));
-        Console.WriteLine();
-    }
-    treeNode = treeNode switch
-    {
-        RecursiveParsing.Phases.Parse.File => new Parser(input).ParseFile(),
-        Expression => new Parser(input).ParseExpression(),
-        _ => throw new UnreachableException(),
-    };
-    if (doubleParseSteps.HasFlag(Print.Tree)) // print tree
-    {
-        treeNode.PrintTree(input.AsSpan(), 0);
-        Console.WriteLine();
-    }
-    treeNode.Print(sb.Clear());
-    if (doubleParseSteps.HasFlag(Print.Pretty)) // pretty-print
-        Console.WriteLine(sb);
+    Console.WriteLine(sb);
 }
 
 [Flags]
