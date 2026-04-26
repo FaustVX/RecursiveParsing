@@ -15,33 +15,6 @@ public enum NodePrecedence
 
 public abstract record class Expression(Range Span, NodePrecedence Precedence) : TreeNode(Span);
 
-public sealed record class String(string S, Range Span) : Expression(Span, NodePrecedence.Primary)
-{
-    public override void Print(StringBuilder sb)
-    => sb.Append('"').Append(Token.String.Escape(S)).Append('"');
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
-}
-
-public sealed record class Id(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
-{
-    public override void Print(StringBuilder sb)
-    => sb.Append(Name);
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
-}
-
-public sealed record class Terminal(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
-{
-    public override void Print(StringBuilder sb)
-    => sb.Append(Name);
-
-    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
-    => PrintTreeImpl(input, indentation, isTerminal: true);
-}
-
 /// <summary>
 /// choice := sequence ("|" sequence)*
 /// </summary>
@@ -92,4 +65,53 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
         foreach (var expr in Expressions)
             expr.PrintTree(input, indentation + 1);
     }
+}
+
+/// <summary>
+/// postfix := primary ("?" | "+" | "*")?
+/// </summary>
+public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : Expression(Span, NodePrecedence.Postfix)
+{
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    {
+        PrintTreeImpl(input, indentation, isTerminal: false);
+        Node.PrintTree(input, indentation + 1);
+    }
+
+    public override void Print(StringBuilder sb)
+    {
+        if (Node.Precedence < Precedence)
+            sb.Append('(');
+        Node.Print(sb);
+        if (Node.Precedence < Precedence)
+            sb.Append(')');
+        sb.Append(Operator.Token.TokenString());
+    }
+}
+
+public sealed record class String(string S, Range Span) : Expression(Span, NodePrecedence.Primary)
+{
+    public override void Print(StringBuilder sb)
+    => sb.Append('"').Append(Token.String.Escape(S)).Append('"');
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation, isTerminal: true);
+}
+
+public sealed record class Id(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
+{
+    public override void Print(StringBuilder sb)
+    => sb.Append(Name);
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation, isTerminal: true);
+}
+
+public sealed record class Terminal(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
+{
+    public override void Print(StringBuilder sb)
+    => sb.Append(Name);
+
+    public override void PrintTree(ReadOnlySpan<char> input, int indentation)
+    => PrintTreeImpl(input, indentation, isTerminal: true);
 }
