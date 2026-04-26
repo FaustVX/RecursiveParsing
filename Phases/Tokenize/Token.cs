@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -89,6 +90,19 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
         (Token.EOL, Token.EOL) => true,
         (Token.EOF, Token.EOF) => true,
         _ => false,
+    };
+
+    public string TokenString()
+    => this switch
+    {
+        Token.WhiteSpace { Value: var v } => v,
+        Token.Id { Value: var v } => v,
+        Token.Terminal { Value: var v } => v,
+        Token.Symbol { Value: string v } => v,
+        Token.Symbol { Value: char v } => v.ToString(),
+        Token.String { Value: var v } => $"\"{v}\"",
+        Token.EOL => "\\n",
+        Token.EOF or null => "",
     };
 
     public override bool Equals([NotNullWhen(true)] object? obj)

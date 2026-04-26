@@ -34,6 +34,9 @@ public abstract record class TreeNode(Range Span)
     => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}{(isTerminal ? "" : ":")}");
 }
 
+/// <summary>
+/// file := declaration*
+/// </summary>
 public record class File(ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
 {
     public override void Print(StringBuilder sb)
@@ -50,6 +53,9 @@ public record class File(ImmutableArray<Declaration> Declarations, Range Span) :
     }
 }
 
+/// <summary>
+/// declaration := ID ":=" expression EOL+
+/// </summary>
 public record class Declaration(Id Id, Expression Expression, Range Span) : TreeNode(Span)
 {
     public override void Print(StringBuilder sb)

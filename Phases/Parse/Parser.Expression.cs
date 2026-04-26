@@ -58,12 +58,12 @@ public partial class Parser
         var start = tokenizer.NextSpan.Start;
         var tree = ParsePrimary(tokenizer);
         var end = tokenizer.NextSpan.End;
-        if (TryConsume(tokenizer, new Token.Symbol { Value = '?' }))
-            return new Optional(tree, start..end);
-        if (TryConsume(tokenizer, new Token.Symbol { Value = '+' }))
-            return new Multiple(tree, start..end);
-        if (TryConsume(tokenizer, new Token.Symbol { Value = '*' }))
-            return new Any(tree, start..end);
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '?' }, out var op))
+            return new Postfix(tree, op, start..end);
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '+' }, out op))
+            return new Postfix(tree, op, start..end);
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '*' }, out op))
+            return new Postfix(tree, op, start..end);
         return tree;
     }
 

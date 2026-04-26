@@ -42,6 +42,9 @@ public sealed record class Terminal(string Name, Range Span) : Expression(Span, 
     => PrintTreeImpl(input, indentation, isTerminal: true);
 }
 
+/// <summary>
+/// choice := sequence ("|" sequence)*
+/// </summary>
 public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expression(Expressions[0].Span.Start..Expressions[^1].Span.End, NodePrecedence.Choice)
 {
     public override void Print(StringBuilder sb)
@@ -65,6 +68,9 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
     }
 }
 
+/// <summary>
+/// sequence := postfix+
+/// </summary>
 public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Expression(Expressions[0].Span.Start..Expressions[^1].Span.End, NodePrecedence.Sequence)
 {
     public override void Print(StringBuilder sb)

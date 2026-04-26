@@ -88,15 +88,19 @@ public partial class Parser(string input)
         }
     }
 
-    public void Expect(Tokenizer tokenizer, Token token)
+    public static void Expect(Tokenizer tokenizer, Token token)
     {
         if (tokenizer.NextToken != token)
             throw new ParserExpectedException(tokenizer.NextTokenSpan, token);
         tokenizer.ScanToken();
     }
 
-    public bool TryConsume(Tokenizer tokenizer, Token token)
+    public static bool TryConsume(Tokenizer tokenizer, Token token)
+    => TryConsume(tokenizer, token, out _);
+
+    public static bool TryConsume(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
     {
+        tokenSpan = tokenizer.NextTokenSpan;
         if (tokenizer.NextToken != token)
             return false;
         tokenizer.ScanToken();
