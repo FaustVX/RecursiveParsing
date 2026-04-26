@@ -6,19 +6,6 @@ using System.Text;
 
 namespace RecursiveParsing;
 
-public readonly union RTObject(Delegate)
-{
-    public static RTObject FromObject(object obj)
-    => obj switch
-    {
-        RTObject o => o,
-        Delegate d => d,
-        _ => throw new RunTimeException(),
-    };
-    public override string ToString()
-    => Value?.ToString() ?? "null";
-}
-
 [Serializable]
 public class RunTimeException() : Exception;
 
@@ -47,16 +34,6 @@ public abstract record class TreeNode(Range Span)
     }
     protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation, bool isTerminal)
     => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}{(isTerminal ? "" : ":")}");
-}
-
-public class Context(params IEnumerable<KeyValuePair<string, RTObject>> variables)
-{
-    public Context? Outer { get; init; }
-    private readonly FrozenDictionary<string, RTObject> _variables = variables.ToFrozenDictionary();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RTObject Get(string name)
-    => _variables.TryGetValue(name, out var value) ? value : Outer?.Get(name) ?? throw new UnknownVariableRTException(name);
 }
 
 public record class File(ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
