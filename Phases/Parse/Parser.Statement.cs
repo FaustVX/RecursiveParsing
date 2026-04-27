@@ -33,6 +33,6 @@ public partial class Parser
         var end = tokenizer.CurrentSpan.End;
         Expect(tokenizer, new Token.EOL());
             while (TryConsume(tokenizer, new Token.EOL()));
-        return new Declaration(new Id(id.Token.TokenString(), id.Span), expression, tokenSpan.Span.Start..end);
+        return new Declaration(new Primary(id), expression, tokenSpan.Span.Start..end);
     }
 }

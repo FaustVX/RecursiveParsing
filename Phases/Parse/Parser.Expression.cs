@@ -72,36 +72,19 @@ public partial class Parser
     /// </summary>
     private Expression ParsePrimary(Tokenizer tokenizer)
     {
-        var start = tokenizer.CurrentSpan.Start;
-        switch (tokenizer.CurrentToken)
+        if (TryConsume(tokenizer, new Token.Id(), out var id))
+            return new Primary(id);
+        if (TryConsume(tokenizer, new Token.Terminal(), out var t))
+            return new Primary(id);
+        if (TryConsume(tokenizer, new Token.String(), out var s))
+            return new Primary(id);
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '(' }, out var p))
         {
-            case Token.Id { Value: var id }:
-            {
-                var end = tokenizer.CurrentSpan.End;
-                tokenizer.ScanToken();
-                return new Id(id, start..end);
-            }
-            case Token.Terminal { Value: var t }:
-            {
-                var end = tokenizer.CurrentSpan.End;
-                tokenizer.ScanToken();
-                return new Terminal(t, start..end);
-            }
-            case Token.String { Value: var s }:
-            {
-                var end = tokenizer.CurrentSpan.End;
-                tokenizer.ScanToken();
-                return new String(s, start..end);
-            }
-            default:
-                if (TryConsume(tokenizer, new Token.Symbol { Value = '(' }))
-                {
-                    var tree = ParseExpression(tokenizer);
-                    var end = tokenizer.CurrentSpan.End;
-                    Expect(tokenizer, new Token.Symbol { Value = ')' });
-                    return tree with { Span = start..end };
-                }
-                throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
-        };
+            var tree = ParseExpression(tokenizer);
+            var end = tokenizer.CurrentSpan.End;
+            Expect(tokenizer, new Token.Symbol { Value = ')' });
+            return tree with { Span = p.Span };
+        }
+        throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
     }
 }

@@ -94,18 +94,13 @@ class PrettyPrintVisitor : IVisitor
         StringBuilder.Append(postfix.Operator.Token.TokenString());
     }
 
-    void IVisitor.Visit(Phases.Parse.String @string)
+    void IVisitor.Visit(Primary primary)
     {
-        StringBuilder.Append('"').Append(Token.String.Escape(@string.S)).Append('"');
-    }
-
-    void IVisitor.Visit(Id id)
-    {
-        StringBuilder.Append(id.Name);
-    }
-
-    void IVisitor.Visit(Terminal terminal)
-    {
-        StringBuilder.Append(terminal.Name);
+        _ = primary.TokenSpan.Token switch
+        {
+            Token.Id => StringBuilder.Append(primary.Name),
+            Token.Terminal => StringBuilder.Append(primary.Name),
+            Token.String => StringBuilder.Append('"').Append(Token.String.Escape(primary.Name)).Append('"'),
+        };
     }
 }

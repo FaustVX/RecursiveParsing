@@ -80,21 +80,9 @@ class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
         Debug.Assert(_depth != 0);
     }
 
-    void IVisitor.Visit(Phases.Parse.String @string)
+    void IVisitor.Visit(Primary primary)
     {
         Debug.Assert(_depth != 0);
-        PrintTree(input.Span, @string, isTerminal: true);
-    }
-
-    void IVisitor.Visit(Id id)
-    {
-        Debug.Assert(_depth != 0);
-        PrintTree(input.Span, id, isTerminal: true);
-    }
-
-    void IVisitor.Visit(Terminal terminal)
-    {
-        Debug.Assert(_depth != 0);
-        PrintTree(input.Span, terminal, isTerminal: true);
+        PrintTree(input.Span, primary, isTerminal: true);
     }
 }

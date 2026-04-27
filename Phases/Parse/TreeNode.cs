@@ -30,9 +30,7 @@ public interface IVisitor
     void Exit(Sequence sequence) {}
     void Enter(Postfix postfix) {}
     void Exit(Postfix postfix) {}
-    void Visit(String @string) {}
-    void Visit(Id id) {}
-    void Visit(Terminal terminal) {}
+    void Visit(Primary primary) {}
 }
 
 public abstract record class TreeNode(Range Span)
@@ -62,7 +60,7 @@ public record class File(ImmutableArray<Declaration> Declarations, Range Span) :
 /// <summary>
 /// declaration := ID ":=" expression EOL+
 /// </summary>
-public record class Declaration(Id Id, Expression Expression, Range Span) : TreeNode(Span)
+public record class Declaration(Primary Id, Expression Expression, Range Span) : TreeNode(Span)
 {
     public override void Accept(IVisitor visitor)
     {

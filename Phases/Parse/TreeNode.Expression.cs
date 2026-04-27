@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using EBNFParser.Phases.Tokenize;
 
 namespace EBNFParser.Phases.Parse;
@@ -65,20 +66,15 @@ public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : E
     }
 }
 
-public sealed record class String(string S, Range Span) : Expression(Span, NodePrecedence.Primary)
+public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.Span, NodePrecedence.Primary)
 {
-    public override void Accept(IVisitor visitor)
-    => visitor.Visit(this);
-}
-
-public sealed record class Id(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
-{
-    public override void Accept(IVisitor visitor)
-    => visitor.Visit(this);
-}
-
-public sealed record class Terminal(string Name, Range Span) : Expression(Span, NodePrecedence.Primary)
-{
+    public string Name { get; init; } = TokenSpan.Token switch
+    {
+        Token.Id { Value: string v} => v,
+        Token.String { Value: string v} => v,
+        Token.Terminal { Value: string v} => v,
+        _ => throw new UnreachableException(),
+    };
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);
 }

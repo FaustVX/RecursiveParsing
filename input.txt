@@ -1,14 +1,7 @@
-statement                 := block-statement ";"
-block-statement           := ("{" (statement)* "}") | expression-statement
-expression-statement      := expression ";"
-expression                := conditionnal
-conditionnal              := equation "?" expression ":" conditionnal
-equation                  := relational (("==" | "!=") relational)?
-relational                := additive (("<" | ">" | "<=" | ">=") additive)?
-additive                  := term (("+" | "-") term)*
-term                      := unary (("*" | "/") unary)*
-unary                     := ("+" | "-") unary | exponentiation
-exponentiation            := postfix ("^" exponentiation)?
-postfix                   := primary ("!" | "(" args ")")*
-primary                   := ID | NUMBER | STRING | "(" expression ")"
-args                      := ( expression ( "," expression)* )?
+file := declaration*
+declaration := ID ":=" expression EOL+
+expression := choice
+choice := sequence ("|" sequence)*
+sequence := postfix+
+postfix := primary ("?" | "+" | "*")?
+primary := ID | TERMINAL | STRING | "(" expression ")"

@@ -6,7 +6,7 @@ using EBNFParser.Visitors;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = (args is [var p,..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
+var input = (args is [var p, ..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
 var printSteps = Print.Pretty;
 var doubleParseSteps = Print.Pretty;
 
@@ -36,8 +36,8 @@ static string Parse(string input, ref TreeNode? treeNode, Print mode)
     if (mode.HasFlag(Print.Tree))
         PrintTree(input, treeNode);
     if (mode.HasFlag(Print.Pretty))
-        return PrettyPrint(treeNode);
-    return "";
+        input = PrettyPrint(treeNode);
+    return input;
 }
 
 static void PrintTokens(string input)

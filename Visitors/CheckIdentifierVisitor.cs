@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using EBNFParser.Phases.Parse;
+using EBNFParser.Phases.Tokenize;
 
 namespace EBNFParser.Visitors;
 
@@ -8,32 +9,32 @@ namespace EBNFParser.Visitors;
 public abstract class CheckIdentifierVisitorException : Exception;
 
 [Serializable]
-public class AlreadyReferencedIdentifierException(Id id) : CheckIdentifierVisitorException
+public class AlreadyReferencedIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
-    public Id Id { get; } = id;
+    public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is already defined";
 }
 
 [Serializable]
-public class InexistantIdentifierException(Id id) : CheckIdentifierVisitorException
+public class InexistantIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
-    public Id Id { get; } = id;
+    public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is inexistant";
 }
 
 [Serializable]
-public class UnreadIdentifierException(Id id) : CheckIdentifierVisitorException
+public class UnreadIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
-    public Id Id { get; } = id;
+    public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is unread";
 }
 
 sealed class CheckIdentifierVisitor : IVisitor
 {
-    private readonly HashSet<Id> _identifiers = [with(IdEqualityComparer.Instance)];
+    private readonly HashSet<Primary> _identifiers = [with(IdEqualityComparer.Instance)];
     public List<CheckIdentifierVisitorException> Exceptions { get; } = [];
 
     void IVisitor.Enter(Declaration declaration)
@@ -54,11 +55,11 @@ sealed class CheckIdentifierVisitor : IVisitor
             throw new AggregateException([..Exceptions]);
     }
 
-    private sealed class CheckInxistantId(FrozenSet<Id> identifiers, List<CheckIdentifierVisitorException> exceptions) : IVisitor
+    private sealed class CheckInxistantId(FrozenSet<Primary> identifiers, List<CheckIdentifierVisitorException> exceptions) : IVisitor
     {
-        void IVisitor.Visit(Id id)
+        void IVisitor.Visit(Primary id)
         {
-            if (!identifiers.Contains(id))
+            if (id.TokenSpan.Token is Token.Id && !identifiers.Contains(id))
                 exceptions.Add(new InexistantIdentifierException(id));
 
         }
@@ -67,14 +68,14 @@ sealed class CheckIdentifierVisitor : IVisitor
     private sealed class CheckUnreadId : IVisitor
     {
         private bool _isDeclerationId = true;
-        public HashSet<Id> ReferencedIds { get; } = [with(IdEqualityComparer.Instance)];
+        public HashSet<Primary> ReferencedIds { get; } = [with(IdEqualityComparer.Instance)];
         void IVisitor.Enter(Declaration declaration)
         {
             _isDeclerationId = true;
         }
-        void IVisitor.Visit(Id id)
+        void IVisitor.Visit(Primary id)
         {
-            if (!_isDeclerationId)
+            if (id.TokenSpan.Token is Token.Id && !_isDeclerationId)
                 ReferencedIds.Add(id);
 
         }
@@ -84,13 +85,13 @@ sealed class CheckIdentifierVisitor : IVisitor
         }
     }
 
-    private sealed class IdEqualityComparer : IEqualityComparer<Id>
+    private sealed class IdEqualityComparer : IEqualityComparer<Primary>
     {
         public static IdEqualityComparer Instance { get; } = new IdEqualityComparer();
-        public bool Equals(Id? x, Id? y)
+        public bool Equals(Primary? x, Primary? y)
         => x?.Name == y?.Name;
 
-        public int GetHashCode([DisallowNull] Id obj)
+        public int GetHashCode([DisallowNull] Primary obj)
         => obj.Name.GetHashCode();
     }
 }
