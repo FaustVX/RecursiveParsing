@@ -56,15 +56,19 @@ public class Tokenizer(string input)
             case null: // End of file
                 length = 0;
                 return new Token.EOF();
-            case '\r' or '\n': // End of line
+            case '\n': // End of line
             {
-                var input = _input;
-                length = 0;
-                do
-                {
-                    length++;
-                    _input++;
-                } while (_input.First is '\r' or '\n');
+                _input++;
+                length = 1;
+                return new Token.EOL();
+            }
+            case '\r': // End of line
+            {
+                length = 1;
+                if ((++_input).First is not '\n')
+                    throw new ExpectedTokenizerException(_i, '\n', _input.First);
+                _input++;
+                length++;
                 return new Token.EOL();
             }
             case char ws when char.IsWhiteSpace(ws): // whitespace
