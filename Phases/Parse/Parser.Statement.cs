@@ -10,7 +10,7 @@ public partial class Parser
     {
         var start = tokenizer.CurrentSpan.Start;
         var statements = ParseAny(ParseDeclaration, tokenizer, ts => ts is { Token: Token.EOF });
-        var end = tokenizer.CurrentSpan.End;
+        var end = tokenizer.PreviousSpan.End;
         return new File(statements, start..end);
     }
 
@@ -24,7 +24,7 @@ public partial class Parser
         Expect(tokenizer, new Token.Symbol { Value = ":=" });
         var expression = ParseExpression(tokenizer);
         _ = ParseMultiple(new Token.EOL(), tokenizer);
-        var end = tokenizer.CurrentSpan.End;
+        var end = tokenizer.PreviousSpan.End;
         return new Declaration(new Primary(id), expression, start..end);
     }
 }

@@ -31,7 +31,10 @@ public class Tokenizer(string input)
 {
     public Token CurrentToken => CurrentTokenSpan.Token;
     public Range CurrentSpan => CurrentTokenSpan.Span;
-    public TokenSpan CurrentTokenSpan { get; private set; } = new(new Token.WhiteSpace(""), 0..0);
+    public TokenSpan CurrentTokenSpan { get; private set => (PreviousTokenSpan, field) = (CurrentTokenSpan, value); } = new(new Token.WhiteSpace(""), 0..0);
+    public Token PreviousToken => PreviousTokenSpan.Token;
+    public Range PreviousSpan => PreviousTokenSpan.Span;
+    public TokenSpan PreviousTokenSpan { get; private set; }
     private ReadOnlyMemory<char> _input = input.AsMemory();
     private int _i = 0;
 
