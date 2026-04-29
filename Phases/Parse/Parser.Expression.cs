@@ -17,7 +17,7 @@ public partial class Parser
     {
         var choices = ParseSequences(tokenizer).ToImmutableArray();
         if (choices is [])
-            throw new ParserUnexpectedException(default);
+            throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
         if (choices is [var expr])
             return expr;
         return new Choice(choices);
@@ -37,7 +37,7 @@ public partial class Parser
     {
         var sequences = ParseMultiple(ParsePostfix, tokenizer, ts => ts is { Token: not (Token.Id or Token.Terminal or Token.String or Token.Symbol { Value: "(" }) });
         if (sequences is [])
-            throw new ParserUnexpectedException(default);
+            throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
         if (sequences is [var expr])
             return expr;
         return new Sequence(sequences);

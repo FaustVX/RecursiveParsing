@@ -56,6 +56,12 @@ public partial class Parser(string input)
                 throw ex;
 #pragma warning restore CA2200 // Rethrow to preserve stack details
             }
+            catch (TokenizerException ex)
+            {
+#pragma warning disable CA2200 // Rethrow to preserve stack details
+                throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
+            }
         }
     }
 
@@ -85,6 +91,12 @@ public partial class Parser(string input)
                 return ParseExpression(tokenizer);
             }
             catch (ParserException ex)
+            {
+#pragma warning disable CA2200 // Rethrow to preserve stack details
+                throw ex;
+#pragma warning restore CA2200 // Rethrow to preserve stack details
+            }
+            catch (TokenizerException ex)
             {
 #pragma warning disable CA2200 // Rethrow to preserve stack details
                 throw ex;
