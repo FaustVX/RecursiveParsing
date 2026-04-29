@@ -63,13 +63,7 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
             };
         }
     }
-    public readonly record struct Symbol(Symbol.CharOrString Value)
-    {
-        public readonly union CharOrString(char, string);
-
-        public override string ToString()
-        => $"{nameof(Symbol)} {{ Value = {Value.Value?.ToString()} }}";
-    }
+    public readonly record struct Symbol(string Value);
     public readonly record struct EOL();
     public readonly record struct EOF();
 
@@ -94,7 +88,6 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
         (Token.Symbol, Token.Symbol { Value: null }) => true,
         (Token.Symbol, not Token.Symbol) => false,
         (Token.Symbol { Value: string vl }, Token.Symbol { Value: string vr }) => vl == vr,
-        (Token.Symbol { Value: char vl }, Token.Symbol { Value: char vr }) => vl == vr,
         (Token.Symbol, Token.Symbol) => false,
         (Token.String, Token.String { Value: null }) => true,
         (Token.String, not Token.String) => false,
@@ -113,7 +106,6 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
         Token.Id { Value: string v } => v,
         Token.Terminal { Value: string v } => v,
         Token.Symbol { Value: string v } => v,
-        Token.Symbol { Value: char v } => v.ToString(),
         Token.String { Value: string v } => $"\"{v}\"",
         Token.EOL => "\\n",
         Token.WhiteSpace or Token.Id or Token.Terminal or Token.Symbol or Token.String or Token.EOF or null => "",
