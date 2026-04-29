@@ -45,6 +45,8 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
                     '\\' => sb.Append("\\\\"),
                     '\t' => sb.Append("\\t"),
                     '\0' => sb.Append("\\0"),
+                    '\r' => sb.Append("\\r"),
+                    '\n' => sb.Append("\\n"),
                     _ => sb.Append(c),
                 };
             }
@@ -58,7 +60,9 @@ public readonly union Token(Token.WhiteSpace, Token.Id, Token.Terminal, Token.Sy
                 '"' => sb.Append('"'),
                 '\\' => sb.Append('\\'),
                 't' => sb.Append('\t'),
-                '0' => sb.Append('\0'),
+                '\0' => sb.Append('\0'),
+                '\r' => sb.Append('\r'),
+                '\n' => sb.Append('\n'),
                 _ => sb.Append(c),
             };
         }

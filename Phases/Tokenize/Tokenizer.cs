@@ -9,22 +9,22 @@ public abstract class TokenizerException(int pos) : Exception
 }
 
 [Serializable]
-public class UnexpectedTokenizerException(int pos, char unexpected) : TokenizerException(pos)
+public class UnexpectedTokenizerException(int pos, char? unexpected) : TokenizerException(pos)
 {
-    public char Unexpected { get; } = unexpected;
+    public char? Unexpected { get; } = unexpected;
 
     public override string ToString()
-    => $"Unexpected token ({Unexpected}) at pos: {Pos}\n" + base.ToString();
+    => $"Unexpected token ({(Unexpected is char unexpected ? Token.String.Escape([unexpected]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
 }
 
 [Serializable]
-public class ExpectedTokenizerException(int pos, char expected, char actual) : TokenizerException(pos)
+public class ExpectedTokenizerException(int pos, char expected, char? actual) : TokenizerException(pos)
 {
     public char Expected { get; } = expected;
-    public char Actual { get; } = actual;
+    public char? Actual { get; } = actual;
 
     public override string ToString()
-    => $"Expected token ({Expected}) but got ({Actual}) at pos: {Pos}\n" + base.ToString();
+    => $"Expected token ({Token.String.Escape([Expected])}) but got ({(Actual is char actual ? Token.String.Escape([actual]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
 }
 
 public class Tokenizer(string input)
@@ -37,11 +37,11 @@ public class Tokenizer(string input)
 
     public void ScanToken()
     {
-        var token = ScanTokenImpl(out var length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
+        var token = ScanTokenImpl(out var length) ?? throw new UnexpectedTokenizerException(_i, _input.First);
         var range = new Range(_i, _i += length);
         if (token is Token.WhiteSpace ws)
         {
-            token = ScanTokenImpl(out length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
+            token = ScanTokenImpl(out length) ?? throw new UnexpectedTokenizerException(_i, _input.First);
             range = new Range(_i, _i += length);
             CurrentTokenSpan = new(ws, token, range);
         }
@@ -87,7 +87,7 @@ public class Tokenizer(string input)
                     return new Token.Symbol($"{symbol}{equals}");
                 }
                 else
-                    throw new ExpectedTokenizerException(_i + 1, '=', _input.First!.Value);
+                    throw new ExpectedTokenizerException(_i + 1, '=', _input.First);
             case ('(' or ')' or '?' or '+' or '*' or '|') and var symbol: // single symbol
                 _input++;
                 length = 1;
@@ -100,13 +100,13 @@ public class Tokenizer(string input)
                 while (_input.First is not '"')
                 {
                     if (_input.IsEmpty || _input.First is '\r' or '\n')
-                        throw new ExpectedTokenizerException(_i + length, '"', _input.First!.Value);
+                        throw new ExpectedTokenizerException(_i + length, '"', _input.First);
                     if (_input.First is '\\') // escaped
                     {
                         length++;
                         _input++;
                         if (_input.First is not ('"' or '\\' or 't' or '0'))
-                            throw new UnexpectedTokenizerException(_i + length, _input.First ?? '\0');
+                            throw new UnexpectedTokenizerException(_i + length, _input.First);
                         Token.String.Unescape(_input.First!.Value, sb);
                     }
                     else
