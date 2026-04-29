@@ -7,8 +7,8 @@ using EBNFParser.Visitors;
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p, ..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = Print.Pretty;
-var doubleParseSteps = Print.Pretty;
+var printSteps = Print.CSharp;
+var doubleParseSteps = Print.None;
 
 TreeNode? treeNode = null;
 var sb = Parse(input, ref treeNode, printSteps);
@@ -35,6 +35,8 @@ static string Parse(string input, ref TreeNode? treeNode, Print mode)
     };
     if (mode.HasFlag(Print.Tree))
         PrintTree(input, treeNode);
+    if (mode.HasFlag(Print.CSharp))
+        CSharpPrint(treeNode);
     if (mode.HasFlag(Print.Pretty))
         input = PrettyPrint(treeNode);
     return input;
@@ -66,6 +68,14 @@ static string PrettyPrint(TreeNode node)
     return value;
 }
 
+static void CSharpPrint(TreeNode treeNode)
+{
+    CSharpVisitor visitor = new();
+    treeNode!.Accept(visitor);
+    Console.WriteLine(visitor.Parser);
+    Console.WriteLine(visitor.IVisitor);
+}
+
 [Flags]
 enum Print
 {
@@ -73,5 +83,6 @@ enum Print
     Tokens = 0b1 << 0,
     Tree = 0b1 << 1,
     Pretty = 0b1 << 2,
+    CSharp = 0b1 << 3,
     All = int.MaxValue,
 }
