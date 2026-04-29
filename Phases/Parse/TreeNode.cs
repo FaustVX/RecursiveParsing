@@ -2,18 +2,6 @@ using System.Collections.Immutable;
 
 namespace EBNFParser.Phases.Parse;
 
-[Serializable]
-public class RunTimeException() : Exception;
-
-[Serializable]
-public class UnknownVariableRTException(string name) : RunTimeException
-{
-    public string Name { get; } = name;
-
-    public override string ToString()
-    => $"Unknown name: {Name}\n" + base.ToString();
-}
-
 public interface IVisitor
 {
     void Enter(File file) {}

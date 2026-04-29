@@ -74,6 +74,7 @@ static void CSharpPrint(TreeNode treeNode)
     treeNode!.Accept(visitor);
     Console.WriteLine(visitor.Parser);
     Console.WriteLine(visitor.IVisitor);
+    Console.WriteLine(visitor.TreeNode);
 }
 
 [Flags]
