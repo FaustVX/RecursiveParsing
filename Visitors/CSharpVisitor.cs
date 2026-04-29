@@ -9,6 +9,24 @@ public class CSharpVisitor : IVisitor
     public StringBuilder IVisitor { get; } = new();
     public StringBuilder TreeNode { get; } = new();
     private readonly PrettyPrintVisitor prettyPrintVisitor = new();
+    private bool _isDeclarationBody = false;
+    private int _depth = 0;
+    private static readonly Dictionary<int, string> _indent = [];
+    private string IndentSpaces(int depth)
+    {
+        ref var indent = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
+        if (exists)
+            return indent!;
+        var s = (stackalloc char[depth * 4]);
+        s.Fill(' ');
+        return indent = new string(s);
+    }
+    private void PrintTree(TreeNode node, bool isTerminal)
+    {
+        node.Accept(prettyPrintVisitor);
+        Parser.AppendLine($"{IndentSpaces(2)}// {IndentSpaces(_depth)}Parse_{node.GetType().Name} ({OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: false)}){(isTerminal ? ";" : ":")}");
+    }
+
     void IVisitor.Enter(Phases.Parse.File file)
     {
         IVisitor.AppendLine($$"""
@@ -37,7 +55,7 @@ public class CSharpVisitor : IVisitor
     void IVisitor.Enter(Declaration declaration)
     {
         declaration.Accept(prettyPrintVisitor);
-        var ebnf = OutputAndClear(prettyPrintVisitor.StringBuilder);
+        var ebnf = OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: true);
         Parser.Append($$"""
             /// <summary>
             /// {{ebnf}}
@@ -63,8 +81,45 @@ public class CSharpVisitor : IVisitor
         }
         """);
     }
+    void IVisitor.Visit(Declaration declaration)
+    {
+        _isDeclarationBody = true;
+    }
+    void IVisitor.Enter(Choice choice)
+    {
+        PrintTree(choice, isTerminal: false);
+        _depth++;
+    }
+    void IVisitor.Exit(Choice choice)
+    {
+        _depth--;
+    }
+    void IVisitor.Enter(Sequence sequence)
+    {
+        PrintTree(sequence, isTerminal: false);
+        _depth++;
+    }
+    void IVisitor.Exit(Sequence sequence)
+    {
+        _depth--;
+    }
+    void IVisitor.Enter(Postfix postfix)
+    {
+        PrintTree(postfix, isTerminal: false);
+        _depth++;
+    }
+    void IVisitor.Exit(Postfix postfix)
+    {
+        _depth--;
+    }
+    void IVisitor.Visit(Primary primary)
+    {
+        if (_isDeclarationBody)
+            PrintTree(primary, isTerminal: true);
+    }
     void IVisitor.Exit(Declaration declaration)
     {
+        _isDeclarationBody = false;
         Parser.AppendLine($$"""
                 var end = tokenizer.CurrentSpan.End;
                 return new {{declaration.Id.Name}}(statements, start..end);
@@ -80,9 +135,9 @@ public class CSharpVisitor : IVisitor
         Parser.AppendLine("}");
     }
 
-    public static string OutputAndClear(StringBuilder sb)
+    private static string OutputAndClear(StringBuilder sb, bool escapeXML)
     {
-        var output = sb.Replace("<", "&lt;").Replace(">", "&gt;").ToString();
+        var output = (escapeXML ? sb.Replace("<", "&lt;").Replace(">", "&gt;") : sb).ToString();
         sb.Clear();
         return output;
     }
