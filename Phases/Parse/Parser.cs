@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using EBNFParser.Phases.Tokenize;
 
@@ -89,6 +90,56 @@ public partial class Parser(string input)
                 throw ex;
 #pragma warning restore CA2200 // Rethrow to preserve stack details
             }
+        }
+    }
+
+    private static ImmutableArray<TAny> ParseAny<TAny>(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+    where TAny : TreeNode
+    {
+        return [.. ParseNodes(parser, tokenizer, endOfParse)];
+
+        static IEnumerable<TAny> ParseNodes(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+        {
+            while (!endOfParse(tokenizer.CurrentTokenSpan))
+                yield return parser(tokenizer);
+        }
+    }
+
+    private static ImmutableArray<Token> ParseAny(Token token, Tokenizer tokenizer)
+    {
+        return [.. ParseTokens(token, tokenizer)];
+
+        static IEnumerable<Token> ParseTokens(Token token, Tokenizer tokenizer)
+        {
+            Expect(tokenizer, token, out var ts);
+            yield return ts.Token;
+            while (TryConsume(tokenizer, token, out ts))
+                yield return ts.Token;
+        }
+    }
+
+    private static ImmutableArray<TMultiple> ParseMultiple<TMultiple>(Func<Tokenizer, TMultiple> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+    where TMultiple : TreeNode
+    {
+        return [.. ParseNodes(parser, tokenizer, endOfParse)];
+
+        static IEnumerable<TMultiple> ParseNodes(Func<Tokenizer, TMultiple> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+        {
+            while (!endOfParse(tokenizer.CurrentTokenSpan))
+                yield return parser(tokenizer);
+        }
+    }
+
+    private static ImmutableArray<Token> ParseMultiple(Token token, Tokenizer tokenizer)
+    {
+        return [.. ParseTokens(token, tokenizer)];
+
+        static IEnumerable<Token> ParseTokens(Token token, Tokenizer tokenizer)
+        {
+            Expect(tokenizer, token, out var ts);
+            yield return ts.Token;
+            while (TryConsume(tokenizer, token, out ts))
+                yield return ts.Token;
         }
     }
 

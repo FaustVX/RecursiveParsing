@@ -35,19 +35,12 @@ public partial class Parser
     /// </summary>
     private Expression ParseSequence(Tokenizer tokenizer)
     {
-        var sequences = ParsePostfixes(tokenizer).ToImmutableArray();
+        var sequences = ParseMultiple(ParsePostfix, tokenizer, ts => ts is { Token: not (Token.Id or Token.Terminal or Token.String or Token.Symbol { Value: '(' }) });
         if (sequences is [])
             throw new ParserUnexpectedException(default);
         if (sequences is [var expr])
             return expr;
         return new Sequence(sequences);
-
-        IEnumerable<Expression> ParsePostfixes(Tokenizer tokenizer)
-        {
-            yield return ParsePostfix(tokenizer);
-            while (tokenizer.CurrentToken is Token.Id or Token.Terminal or Token.String or Token.Symbol { Value: '(' })
-                yield return ParsePostfix(tokenizer);
-        }
     }
 
     /// <summary>
@@ -57,13 +50,12 @@ public partial class Parser
     {
         var start = tokenizer.CurrentSpan.Start;
         var tree = ParsePrimary(tokenizer);
-        var end = tokenizer.CurrentSpan.End;
         if (TryConsume(tokenizer, new Token.Symbol { Value = '?' }, out var op))
-            return new Postfix(tree, op, start..end);
+            return new Postfix(tree, op, start..op.Span.End);
         if (TryConsume(tokenizer, new Token.Symbol { Value = '+' }, out op))
-            return new Postfix(tree, op, start..end);
+            return new Postfix(tree, op, start..op.Span.End);
         if (TryConsume(tokenizer, new Token.Symbol { Value = '*' }, out op))
-            return new Postfix(tree, op, start..end);
+            return new Postfix(tree, op, start..op.Span.End);
         return tree;
     }
 
@@ -75,15 +67,14 @@ public partial class Parser
         if (TryConsume(tokenizer, new Token.Id(), out var id))
             return new Primary(id);
         if (TryConsume(tokenizer, new Token.Terminal(), out var t))
-            return new Primary(id);
+            return new Primary(t);
         if (TryConsume(tokenizer, new Token.String(), out var s))
-            return new Primary(id);
-        if (TryConsume(tokenizer, new Token.Symbol { Value = '(' }, out var p))
+            return new Primary(s);
+        if (TryConsume(tokenizer, new Token.Symbol { Value = '(' }, out var po))
         {
             var tree = ParseExpression(tokenizer);
-            var end = tokenizer.CurrentSpan.End;
-            Expect(tokenizer, new Token.Symbol { Value = ')' });
-            return tree with { Span = p.Span };
+            Expect(tokenizer, new Token.Symbol { Value = ')' }, out var pc);
+            return tree with { Span = po.Span.Start..pc.Span.End };
         }
         throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
     }
