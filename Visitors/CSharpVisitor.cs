@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using EBNFParser.Phases.Parse;
 
@@ -27,7 +28,7 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
     private void PrintTree(TreeNode node, bool isTerminal)
     {
         node.Accept(prettyPrintVisitor);
-        Parser.AppendLine($"{IndentSpaces(1)}/// {IndentSpaces(_depth - 1)}Parse_{node.GetType().Name} ({OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: false)}){(isTerminal ? ";" : ":")}");
+        Parser.AppendLine($"{IndentSpaces(1)}/// {IndentSpaces(_depth - 1)}Parse_{node.GetType().Name} ({OutputAndClear(prettyPrintVisitor, escapeXML: false)}){(isTerminal ? ";" : ":")}");
     }
 
     void IVisitor.Enter(Phases.Parse.File file)
@@ -55,7 +56,7 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
     void IVisitor.Enter(Declaration declaration)
     {
         declaration.Accept(prettyPrintVisitor);
-        var ebnf = OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: true);
+        var ebnf = OutputAndClear(prettyPrintVisitor, escapeXML: true);
         Parser.AppendLine($$"""
             /// <summary>
             /// <c>{{ebnf}}</c>
@@ -137,10 +138,15 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
         Parser.AppendLine("}");
     }
 
-    private static string OutputAndClear(StringBuilder sb, bool escapeXML)
+    private static string OutputAndClear(PrettyPrintVisitor visitor , bool escapeXML)
     {
-        var output = (escapeXML ? sb.Replace("<", "&lt;").Replace(">", "&gt;") : sb).ToString();
-        sb.Clear();
+        var output = (escapeXML ? visitor.StringBuilder.Replace("<", "&lt;").Replace(">", "&gt;") : visitor.StringBuilder).ToString();
+        visitor.StringBuilder.Clear();
+        Precedences(visitor).Clear();
+        Precedences(visitor).Push((NodePrecedence)0);
         return output;
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_precedences")]
+        static extern ref readonly Stack<NodePrecedence> Precedences(PrettyPrintVisitor visitor);
     }
 }
