@@ -32,7 +32,7 @@ public class CSharpVisitor : IVisitor
         IVisitor.AppendLine($$"""
         namespace EBNFParser.Phases.Parse;
 
-        public interface IVisitor
+        public partial interface IVisitor
         {
         """);
         Parser.AppendLine("""
@@ -46,7 +46,7 @@ public class CSharpVisitor : IVisitor
         TreeNode.AppendLine($$"""
         namespace EBNFParser.Phases.Parse;
 
-        public abstract record class TreeNode(Range Span)
+        public partial abstract record class TreeNode(Range Span)
         {
             public abstract void Accept(IVisitor visitor);
         }
@@ -70,7 +70,7 @@ public class CSharpVisitor : IVisitor
         /// <summary>
         /// {{ebnf}}
         /// </summary>
-        public record class {{declaration.Id.Name}}(Range Span) : TreeNode(Span)
+        public partial record class {{declaration.Id.Name}}(Range Span) : TreeNode(Span)
         {
             public override void Accept(IVisitor visitor)
             {
