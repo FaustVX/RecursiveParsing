@@ -40,9 +40,110 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
         {
         """);
         Parser.AppendLine($$"""
+        using System.Collections.Immutable;
+        using EBNFParser.Phases.Tokenize;
+
         namespace {{Namespace}};
+
+        [Serializable]
+        public abstract class ParserException(TokenSpan tokenSpan) : Exception
+        {
+            public TokenSpan TokenSpan { get; } = tokenSpan;
+        }
+
+        [Serializable]
+        public class ParserUnexpectedException(TokenSpan tokenSpan) : ParserException(tokenSpan)
+        {
+            public override string ToString()
+            => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+        }
+
+        [Serializable]
+        public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : ParserException(tokenSpan)
+        {
+            public Token Expected { get; } = expected;
+
+            public override string ToString()
+            => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+        }
+
         public partial class {{ParserClass}}
         {
+            protected static class Helper
+            {
+                public static ImmutableArray<TAny> ParseAny<TAny>(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+                where TAny : TreeNode
+                {
+                    return [.. ParseNodes(parser, tokenizer, endOfParse)];
+
+                    static IEnumerable<TAny> ParseNodes(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+                    {
+                        while (!endOfParse(tokenizer.CurrentTokenSpan))
+                            yield return parser(tokenizer);
+                    }
+                }
+
+                public static ImmutableArray<Token> ParseAny(Token token, Tokenizer tokenizer)
+                {
+                    return [.. ParseTokens(token, tokenizer)];
+
+                    static IEnumerable<Token> ParseTokens(Token token, Tokenizer tokenizer)
+                    {
+                        Expect(tokenizer, token, out var ts);
+                        yield return ts.Token;
+                        while (TryConsume(tokenizer, token, out ts))
+                            yield return ts.Token;
+                    }
+                }
+
+                public static ImmutableArray<TMultiple> ParseMultiple<TMultiple>(Func<Tokenizer, TMultiple> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+                where TMultiple : TreeNode
+                {
+                    return [.. ParseNodes(parser, tokenizer, endOfParse)];
+
+                    static IEnumerable<TMultiple> ParseNodes(Func<Tokenizer, TMultiple> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
+                    {
+                        while (!endOfParse(tokenizer.CurrentTokenSpan))
+                            yield return parser(tokenizer);
+                    }
+                }
+
+                public static ImmutableArray<Token> ParseMultiple(Token token, Tokenizer tokenizer)
+                {
+                    return [.. ParseTokens(token, tokenizer)];
+
+                    static IEnumerable<Token> ParseTokens(Token token, Tokenizer tokenizer)
+                    {
+                        Expect(tokenizer, token, out var ts);
+                        yield return ts.Token;
+                        while (TryConsume(tokenizer, token, out ts))
+                            yield return ts.Token;
+                    }
+                }
+
+                public static void Expect(Tokenizer tokenizer, Token token)
+                => Expect(tokenizer, token, out _);
+
+                public static void Expect(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
+                {
+                    tokenSpan = tokenizer.CurrentTokenSpan;
+                    if (tokenizer.CurrentToken != token)
+                        throw new ParserExpectedException(tokenizer.CurrentTokenSpan, token);
+                    tokenizer.ScanToken();
+                }
+
+                public static bool TryConsume(Tokenizer tokenizer, Token token)
+                => TryConsume(tokenizer, token, out _);
+
+                public static bool TryConsume(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
+                {
+                    tokenSpan = tokenizer.CurrentTokenSpan;
+                    if (tokenizer.CurrentToken != token)
+                        return false;
+                    tokenizer.ScanToken();
+                    return true;
+                }
+            }
         """);
         TreeNode.AppendLine($$"""
         namespace {{Namespace}};
