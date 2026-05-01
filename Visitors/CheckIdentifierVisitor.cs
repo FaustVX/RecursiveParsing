@@ -32,7 +32,7 @@ public class UnreadIdentifierException(Primary id) : CheckIdentifierVisitorExcep
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is unread";
 }
 
-sealed class CheckIdentifierVisitor(bool throwOnError) : IVisitor
+public sealed class CheckIdentifierVisitor(bool throwOnError) : IVisitor
 {
     private readonly HashSet<Primary> _identifiers = [with(IdEqualityComparer.Instance)];
     public List<CheckIdentifierVisitorException> Exceptions { get; } = [];

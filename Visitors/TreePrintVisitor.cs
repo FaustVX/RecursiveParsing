@@ -3,7 +3,7 @@ using EBNFParser.Phases.Parse;
 
 namespace EBNFParser.Visitors;
 
-class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
+public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
 {
     private int _depth = 0;
     private static readonly Dictionary<int, string> _indent = [];

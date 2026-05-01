@@ -5,7 +5,7 @@ using EBNFParser.Phases.Tokenize;
 
 namespace EBNFParser.Visitors;
 
-class PrettyPrintVisitor : IVisitor
+public class PrettyPrintVisitor : IVisitor
 {
     public StringBuilder StringBuilder { get; } = new();
     private readonly Stack<NodePrecedence> _precedences = [];
