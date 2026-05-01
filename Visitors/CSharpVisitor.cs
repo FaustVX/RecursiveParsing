@@ -3,11 +3,14 @@ using EBNFParser.Phases.Parse;
 
 namespace EBNFParser.Visitors;
 
-public class CSharpVisitor : IVisitor
+public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
 {
     public StringBuilder Parser { get; } = new();
     public StringBuilder IVisitor { get; } = new();
     public StringBuilder TreeNode { get; } = new();
+    public string Namespace { get; } = @namespace;
+    public string ParserClass { get; } = parserClass;
+
     private readonly PrettyPrintVisitor prettyPrintVisitor = new();
     private bool _isDeclarationBody = false;
     private int _depth = 1;
@@ -30,21 +33,18 @@ public class CSharpVisitor : IVisitor
     void IVisitor.Enter(Phases.Parse.File file)
     {
         IVisitor.AppendLine($$"""
-        namespace EBNFParser.Phases.Parse;
+        namespace {{Namespace}};
 
         public partial interface IVisitor
         {
         """);
-        Parser.AppendLine("""
-        using System.Collections.Immutable;
-        using EBNFParser.Phases.Tokenize;
-
-        namespace EBNFParser.Phases.Parse;
-        public partial class Parser
+        Parser.AppendLine($$"""
+        namespace {{Namespace}};
+        public partial class {{ParserClass}}
         {
         """);
         TreeNode.AppendLine($$"""
-        namespace EBNFParser.Phases.Parse;
+        namespace {{Namespace}};
 
         public partial abstract record class TreeNode(Range Span)
         {

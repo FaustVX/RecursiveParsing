@@ -70,7 +70,7 @@ static string PrettyPrint(TreeNode node)
 
 static void CSharpPrint(TreeNode treeNode)
 {
-    CSharpVisitor visitor = new();
+    CSharpVisitor visitor = new("EBNFParser.Phases.Parse", "Parser");
     treeNode!.Accept(visitor);
     Console.WriteLine(visitor.Parser);
     Console.WriteLine(visitor.IVisitor);
