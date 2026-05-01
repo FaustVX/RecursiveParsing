@@ -10,7 +10,7 @@ public class CSharpVisitor : IVisitor
     public StringBuilder TreeNode { get; } = new();
     private readonly PrettyPrintVisitor prettyPrintVisitor = new();
     private bool _isDeclarationBody = false;
-    private int _depth = 0;
+    private int _depth = 1;
     private static readonly Dictionary<int, string> _indent = [];
     private string IndentSpaces(int depth)
     {
@@ -24,7 +24,7 @@ public class CSharpVisitor : IVisitor
     private void PrintTree(TreeNode node, bool isTerminal)
     {
         node.Accept(prettyPrintVisitor);
-        Parser.AppendLine($"{IndentSpaces(2)}// {IndentSpaces(_depth)}Parse_{node.GetType().Name} ({OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: false)}){(isTerminal ? ";" : ":")}");
+        Parser.AppendLine($"{IndentSpaces(1)}/// {IndentSpaces(_depth - 1)}Parse_{node.GetType().Name} ({OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: false)}){(isTerminal ? ";" : ":")}");
     }
 
     void IVisitor.Enter(Phases.Parse.File file)
@@ -56,19 +56,18 @@ public class CSharpVisitor : IVisitor
     {
         declaration.Accept(prettyPrintVisitor);
         var ebnf = OutputAndClear(prettyPrintVisitor.StringBuilder, escapeXML: true);
-        Parser.Append($$"""
+        Parser.AppendLine($$"""
             /// <summary>
-            /// {{ebnf}}
+            /// <c>{{ebnf}}</c>
             /// </summary>
-            private {{declaration.Id.Name}} Parse_{{declaration.Id.Name}}(Tokenizer tokenizer)
-            {
-                var start = tokenizer.CurrentSpan.Start;
-        
+            /// <remarks>
+            /// <code>
+            /// var start = tokenizer.CurrentSpan.Start;
         """);
         TreeNode.AppendLine($$"""
 
         /// <summary>
-        /// {{ebnf}}
+        /// <code>{{ebnf}}</code>
         /// </summary>
         public partial record class {{declaration.Id.Name}}(Range Span) : TreeNode(Span)
         {
@@ -121,9 +120,12 @@ public class CSharpVisitor : IVisitor
     {
         _isDeclarationBody = false;
         Parser.AppendLine($$"""
-                var end = tokenizer.CurrentSpan.End;
-                return new {{declaration.Id.Name}}(statements, start..end);
-            }
+            /// var end = tokenizer.CurrentSpan.End;
+            /// return new {{declaration.Id.Name}}(statements, start..end);
+            /// </code>
+            /// </remarks>
+            private partial {{declaration.Id.Name}} Parse_{{declaration.Id.Name}}(Tokenizer tokenizer);
+
         """);
         IVisitor.AppendLine($$"""    void Enter({{declaration.Id.Name}} {{declaration.Id.Name}}) {}""");
         IVisitor.AppendLine($$"""    void Visit({{declaration.Id.Name}} {{declaration.Id.Name}}) {}""");
