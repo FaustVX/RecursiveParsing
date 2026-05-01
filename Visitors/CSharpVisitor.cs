@@ -47,7 +47,7 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
         TreeNode.AppendLine($$"""
         namespace {{Namespace}};
 
-        public partial abstract record class TreeNode(Range Span)
+        public abstract partial record class TreeNode(Range Span)
         {
             public abstract void Accept(IVisitor visitor);
         }
