@@ -49,7 +49,7 @@ public class Tokenizer(string input)
             CurrentTokenSpan = new(ws, token, range);
         }
         else
-            CurrentTokenSpan = new(new(""), token, range);
+            CurrentTokenSpan = new(token, range);
     }
 
     private Token? ScanTokenImpl(out int length)

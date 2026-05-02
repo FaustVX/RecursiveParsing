@@ -60,6 +60,13 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
         Token.AppendLine($$"""
         namespace {{Namespace}};
 
+        public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Range Span)
+        {
+            public TokenSpan(Token token, Range span)
+            : this(new(""), token, span)
+            {}
+        }
+
         [Union]
         public readonly partial struct Token : IUnion, IEquatable<Token>
         {
