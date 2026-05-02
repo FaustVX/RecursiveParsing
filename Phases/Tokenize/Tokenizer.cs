@@ -27,7 +27,7 @@ public class ExpectedTokenizerException(int pos, char expected, char? actual) : 
     => $"Expected token ({Token.Escape([Expected])}) but got ({(Actual is char actual ? Token.Escape([actual]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
 }
 
-public class Tokenizer(string input)
+public partial class Tokenizer(string input)
 {
     public Token CurrentToken => CurrentTokenSpan.Token;
     public Range CurrentSpan => CurrentTokenSpan.Span;
@@ -52,7 +52,8 @@ public class Tokenizer(string input)
             CurrentTokenSpan = new(token, range);
     }
 
-    private Token? ScanTokenImpl(out int length)
+    private partial Token? ScanTokenImpl(out int length);
+    private partial Token? ScanTokenImpl(out int length)
     {
         switch (_input.First)
         {
