@@ -1,45 +1,29 @@
-﻿extern alias EBNF;
-
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using RecursiveParsing;
+using EBNF = EBNFParser;
 
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p,..] && File.Exists(p)) ? File.ReadAllText(p) : throw new Exception();
 
-var tokenizer = new Tokenizer(input);
-do
-{
-    tokenizer.ScanToken();
-    Console.WriteLine(tokenizer.NextTokenSpan.ToString());
-} while (tokenizer.NextToken is not (null or Token.EOL));
+// var ebnf = new EBNF.Phases.Parse.Parser(input).ParseFile();
 
-var parser = new Parser().ParseExpression;
-var treeNode = parser(input);
-if (treeNode is null)
-    return;
-treeNode.PrintTree(input.AsSpan(), 0);
-var sb = new StringBuilder();
-treeNode.Print(sb);
-Console.Write(sb);
-if (true) // double parse
+// var visitor0 = new EBNF.Visitors.CheckIdentifierVisitor(throwOnError: true);
+// ebnf.Accept(visitor0);
+// var visitor1 = new EBNF.Visitors.CSharpVisitor(nameof(RecursiveParsing), "Parser");
+// ebnf.Accept(visitor1);
+// PrintSB(visitor1.Parser);
+// PrintSB(visitor1.IVisitor);
+// PrintSB(visitor1.TreeNode);
+// PrintSB(visitor1.Token);
+// PrintSB(visitor1.Tokenizer);
+var ast = new Parser(input).ParseFile();
+;
+
+static void PrintSB(StringBuilder sb, [CallerArgumentExpression(nameof(sb))]string expr = default!)
 {
-#pragma warning disable CS0162 // Unreachable code detected
-    Console.WriteLine();
-    parser(sb.ToString()).Print(sb.Clear());
-    Console.Write(sb);
-#pragma warning restore CS0162 // Unreachable code detected
-}
-if (true && ((object)treeNode) is ExpressionNode expressionNode)
-{
-    Console.Write(" = ");
-    Console.WriteLine(expressionNode.Evaluate(new([
-        new("true", true),
-        new("false", false),
-        new("abs", (Delegate)decimal.Abs),
-        new("rng", (Delegate)new Random().NextDouble),
-        new("round", (Delegate)((decimal d, decimal decimals) => decimal.Round(d, (int)decimals))),
-        new("len", (Delegate)((string s) => s.Length)),
-        ]){ Outer = new([new("a", 3)]) }));
+    Console.WriteLine($"- {expr}:");
+    Console.WriteLine(sb);
 }

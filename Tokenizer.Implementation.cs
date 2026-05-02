@@ -2,74 +2,15 @@ using System.Text;
 
 namespace RecursiveParsing;
 
-[Serializable]
-public abstract class TokenizerException(int pos) : Exception
+public partial class Tokenizer
 {
-    public int Pos { get; } = pos;
-}
-
-[Serializable]
-public class UnexpectedTokenizerException(int pos, char unexpected) : TokenizerException(pos)
-{
-    public char Unexpected { get; } = unexpected;
-
-    public override string ToString()
-    => $"Unexpected token ({Unexpected}) at pos: {Pos}\n" + base.ToString();
-}
-
-[Serializable]
-public class ExpectedTokenizerException(int pos, char expected) : TokenizerException(pos)
-{
-    public char Expected { get; } = expected;
-
-    public override string ToString()
-    => $"Expected token ({Expected}) at pos: {Pos}\n" + base.ToString();
-}
-
-public class Tokenizer(string input)
-{
-    public Token NextToken => NextTokenSpan.Token;
-    public Range NextSpan => NextTokenSpan.Span;
-    public TokenSpan NextTokenSpan { get; private set; } = new(new Token.WhiteSpace(""), 0..0);
-    private ReadOnlyMemory<char> _input = input.AsMemory();
-    private int _i = 0;
-
-    public void Expect(Token token)
-    {
-        if (NextToken != token)
-            throw new ParserExpectedException(NextTokenSpan, token);
-        ScanToken();
-    }
-
-    public bool TryConsume(Token token)
-    {
-        if (NextToken != token)
-            return false;
-        ScanToken();
-        return true;
-    }
-
-    public void ScanToken()
-    {
-        var token = ScanTokenImpl(out var length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
-        var range = new Range(_i, _i += length);
-        if (token is Token.WhiteSpace ws)
-        {
-            token = ScanTokenImpl(out length) ?? throw new UnexpectedTokenizerException(_i, _input.First ?? '\0');
-            range = new Range(_i, _i += length);
-            NextTokenSpan = new(ws, token, range);
-        }
-        else
-            NextTokenSpan = new(new(""), token, range);
-    }
-
-    private Token? ScanTokenImpl(out int length)
+    private partial Token? ScanTokenImpl(out int length)
     {
         switch (_input.First)
         {
-            case null: // End of line
+            case null: // End of file
                 length = 0;
-                return new Token.EOL();
+                return new Token.EOF();
             case char ws when char.IsWhiteSpace(ws): // whitespace
             {
                 var input = _input;
@@ -90,11 +31,11 @@ public class Tokenizer(string input)
                     return new Token.Symbol($"{symbol}{equals}");
                 }
                 length = 1;
-                return new Token.Symbol(symbol);
+                return new Token.Symbol(symbol.ToString());
             case ('+' or '-' or '*' or '/' or '^' or '(' or ')' or ',' or '?' or ':' or ';' or '{' or '}') and var symbol: // single symbol
                 _input++;
                 length = 1;
-                return new Token.Symbol(symbol);
+                return new Token.Symbol(symbol.ToString());
             case '"': // string
             {
                 length = 1;
@@ -103,14 +44,14 @@ public class Tokenizer(string input)
                 while (_input.First is not '"')
                 {
                     if (_input.IsEmpty)
-                        throw new ExpectedTokenizerException(_i + length, '"');
+                        throw new ExpectedTokenizerException(_i + length, '"', _input.First);
                     if (_input.First is '\\') // escaped
                     {
                         length++;
                         _input++;
                         if (_input.First is not ('"' or '\\' or 'r' or 'n' or 't' or '0'))
                             throw new UnexpectedTokenizerException(_i + length, _input.First ?? '\0');
-                        Token.String.Unescape(_input.First!.Value, sb);
+                        Token.Unescape(_input.First!.Value, sb);
                     }
                     else
                         sb.Append(_input.First!.Value);

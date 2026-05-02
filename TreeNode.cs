@@ -1,65 +1,189 @@
-using System.Collections.Frozen;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace RecursiveParsing;
 
-public readonly union RTObject(decimal, bool, string, Delegate)
+public abstract partial record class TreeNode(Range Span)
 {
-    public static RTObject FromObject(object obj)
-    => obj switch
-    {
-        RTObject o => o,
-        int i => i,
-        float f => (decimal)f,
-        double d => (decimal)d,
-        decimal d => d,
-        bool b => b,
-        string s => s,
-        Delegate d => d,
-        _ => throw new RunTimeException(),
-    };
-    public override string ToString()
-    => Value?.ToString() ?? "null";
+    public abstract void Accept(IVisitor visitor);
 }
 
-[Serializable]
-public class RunTimeException() : Exception;
-
-[Serializable]
-public class UnknownVariableRTException(string name) : RunTimeException
+/// <summary>
+/// <code>statement := blockstatement ";"</code>
+/// </summary>
+public partial record class statement(Range Span) : TreeNode(Span)
 {
-    public string Name { get; } = name;
-
-    public override string ToString()
-    => $"Unknown name: {Name}\n" + base.ToString();
-}
-
-public abstract record class TreeNode(Range Span)
-{
-    private static readonly Dictionary<int, string> _indent = [];
-    public abstract void Print(StringBuilder sb);
-    public abstract void PrintTree(ReadOnlySpan<char> input, int indentation = 0);
-    protected string IndentSpaces(int depth)
+    public override void Accept(IVisitor visitor)
     {
-        ref var indent = ref CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
-        if (exists)
-            return indent!;
-        var s = (stackalloc char[depth * 2]);
-        s.Fill(' ');
-        return indent = new string(s);
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
     }
-    protected void PrintTreeImpl(ReadOnlySpan<char> input, int indentation, bool isTerminal)
-    => Console.WriteLine($"{IndentSpaces(indentation)}{GetType().Name} = [{Span}]{input[Span]}{(isTerminal ? "" : ":")}");
 }
 
-public class Context(params IEnumerable<KeyValuePair<string, RTObject>> variables)
+/// <summary>
+/// <code>blockstatement := "{" statement* "}" | expressionstatement</code>
+/// </summary>
+public partial record class blockstatement(Range Span) : TreeNode(Span)
 {
-    public Context? Outer { get; init; }
-    private readonly FrozenDictionary<string, RTObject> _variables = variables.ToFrozenDictionary();
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RTObject Get(string name)
-    => _variables.TryGetValue(name, out var value) ? value : Outer?.Get(name) ?? throw new UnknownVariableRTException(name);
+/// <summary>
+/// <code>expressionstatement := expression ";"</code>
+/// </summary>
+public partial record class expressionstatement(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>expression := conditionnal</code>
+/// </summary>
+public partial record class expression(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>conditionnal := equation "?" expression ":" conditionnal</code>
+/// </summary>
+public partial record class conditionnal(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>equation := relational (("==" | "!=") relational)?</code>
+/// </summary>
+public partial record class equation(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>relational := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?</code>
+/// </summary>
+public partial record class relational(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>additive := term (("+" | "-") term)*</code>
+/// </summary>
+public partial record class additive(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>term := unary (("*" | "/") unary)*</code>
+/// </summary>
+public partial record class term(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>unary := ("+" | "-") unary | exponentiation</code>
+/// </summary>
+public partial record class unary(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>exponentiation := postfix ("^" exponentiation)?</code>
+/// </summary>
+public partial record class exponentiation(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>postfix := primary ("!" | "(" args ")")*</code>
+/// </summary>
+public partial record class postfix(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>primary := ID | NUMBER | STRING | "(" expression ")"</code>
+/// </summary>
+public partial record class primary(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
+}
+
+/// <summary>
+/// <code>args := (expression ("," expression)*)?</code>
+/// </summary>
+public partial record class args(Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        visitor.Visit(this);
+        visitor.Exit(this);
+    }
 }

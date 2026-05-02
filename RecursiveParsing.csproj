@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="lib\ebnf\RecursiveParsing.csproj" Aliases="EBNF" />
+    <ProjectReference Include="lib\ebnf\EBNFParser.csproj"/>
   </ItemGroup>
 
 </Project>

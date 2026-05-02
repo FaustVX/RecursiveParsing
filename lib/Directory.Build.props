@@ -1,6 +1,0 @@
-<Project>
-    <PropertyGroup>
-        <AssemblyName>RecursiveParsing.Lib.EBNF</AssemblyName>
-        <RootNamespace>RecursiveParsing.Lib.EBNF</RootNamespace>
-    </PropertyGroup>
-</Project>

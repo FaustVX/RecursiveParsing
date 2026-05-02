@@ -1,0 +1,14 @@
+statement                 := blockstatement
+blockstatement            := ("{" (statement)* "}") | expressionstatement
+expressionstatement       := expression ";"
+expression                := conditionnal
+conditionnal              := equation ("?" expression ":" conditionnal)?
+equation                  := relational (("==" | "!=") relational)?
+relational                := additive (("<" | ">" | "<=" | ">=") additive)?
+additive                  := term (("+" | "-") term)*
+term                      := unary (("*" | "/") unary)*
+unary                     := ("+" | "-") unary | exponentiation
+exponentiation            := postfix ("^" exponentiation)?
+postfix                   := primary ("!" | "(" args ")")*
+primary                   := ID | NUMBER | STRING | "(" expression ")"
+args                      := ( expression ( "," expression)* )?
