@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
 using EBNFParser.Phases.Parse;
 using EBNFParser.Phases.Tokenize;
 using EBNFParser.Visitors;
@@ -72,9 +74,16 @@ static void CSharpPrint(TreeNode treeNode)
 {
     CSharpVisitor visitor = new("EBNFParser.Phases.Parse", "Parser");
     treeNode!.Accept(visitor);
-    Console.WriteLine(visitor.Parser);
-    Console.WriteLine(visitor.IVisitor);
-    Console.WriteLine(visitor.TreeNode);
+    PrintSB(visitor.Parser);
+    PrintSB(visitor.IVisitor);
+    PrintSB(visitor.TreeNode);
+    PrintSB(visitor.Token);
+    PrintSB(visitor.Tokenizer);
+    static void PrintSB(StringBuilder sb, [CallerArgumentExpression(nameof(sb))]string expr = default!)
+    {
+        Console.WriteLine($"- {expr}:");
+        Console.WriteLine(sb);
+    }
 }
 
 [Flags]
