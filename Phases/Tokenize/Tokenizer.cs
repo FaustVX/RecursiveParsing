@@ -14,7 +14,7 @@ public class UnexpectedTokenizerException(int pos, char? unexpected) : Tokenizer
     public char? Unexpected { get; } = unexpected;
 
     public override string ToString()
-    => $"Unexpected token ({(Unexpected is char unexpected ? Token.String.Escape([unexpected]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
+    => $"Unexpected token ({(Unexpected is char unexpected ? Token.Escape([unexpected]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
 }
 
 [Serializable]
@@ -24,7 +24,7 @@ public class ExpectedTokenizerException(int pos, char expected, char? actual) : 
     public char? Actual { get; } = actual;
 
     public override string ToString()
-    => $"Expected token ({Token.String.Escape([Expected])}) but got ({(Actual is char actual ? Token.String.Escape([actual]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
+    => $"Expected token ({Token.Escape([Expected])}) but got ({(Actual is char actual ? Token.Escape([actual]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
 }
 
 public class Tokenizer(string input)
@@ -114,7 +114,7 @@ public class Tokenizer(string input)
                         _input++;
                         if (_input.First is not ('"' or '\\' or 't' or '0'))
                             throw new UnexpectedTokenizerException(_i + length, _input.First);
-                        Token.String.Unescape(_input.First!.Value, sb);
+                        Token.Unescape(_input.First!.Value, sb);
                     }
                     else
                         sb.Append(_input.First!.Value);

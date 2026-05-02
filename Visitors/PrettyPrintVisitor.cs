@@ -100,7 +100,7 @@ public class PrettyPrintVisitor : IVisitor
         {
             Token.Id => StringBuilder.Append(primary.Name),
             Token.Terminal => StringBuilder.Append(primary.Name),
-            Token.String => StringBuilder.Append('"').Append(Token.String.Escape(primary.Name)).Append('"'),
+            Token.String => StringBuilder.Append('"').Append(Token.Escape(primary.Name)).Append('"'),
             _ => throw new UnreachableException(),
         };
     }
