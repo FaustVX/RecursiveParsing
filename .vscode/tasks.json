@@ -2,7 +2,23 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build sln",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/RecursiveParsing.slnx",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build proj",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -14,7 +30,23 @@
             "problemMatcher": "$msCompile",
             "group": {
                 "kind": "build",
-                "isDefault": true
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build lib",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/lib/ebnf/EBNFParser.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": false
             }
         },
         {

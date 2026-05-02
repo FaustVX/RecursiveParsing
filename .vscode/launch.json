@@ -8,11 +8,27 @@
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "build proj",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/net11.0/RecursiveParsing.dll",
             "args": ["input.txt"],
             "cwd": "${workspaceFolder}",
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            // Use IntelliSense to find out which attributes exist for C# debugging
+            // Use hover for the description of the existing attributes
+            // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md
+            "name": ".NET Core EBNF Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build lib",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/lib/ebnf/bin/Debug/net11.0/EBNFParser.dll",
+            "args": ["${workspaceFolder}/myLang.ebnf"],
+            "cwd": "${workspaceFolder}/lib/ebnf",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false
