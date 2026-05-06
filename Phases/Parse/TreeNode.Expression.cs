@@ -32,6 +32,12 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
 
         visitor.Exit(this);
     }
+
+    public bool Equals(Choice? other)
+    => StructuralEquals(Expressions, other?.Expressions);
+
+    public override int GetHashCode()
+    => Expressions.GetHashCode();
 }
 
 /// <summary>
@@ -51,6 +57,12 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
 
         visitor.Exit(this);
     }
+
+    public bool Equals(Sequence? other)
+    => StructuralEquals(Expressions, other?.Expressions);
+
+    public override int GetHashCode()
+    => Expressions.GetHashCode();
 }
 
 /// <summary>
@@ -64,6 +76,12 @@ public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : E
         Node.Accept(visitor);
         visitor.Exit(this);
     }
+
+    public virtual bool Equals(Postfix? other)
+    => other?.Node.Equals(Node) ?? false;
+
+    public override int GetHashCode()
+    => Node.GetHashCode();
 }
 
 public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.Span, NodePrecedence.Primary)
@@ -77,4 +95,10 @@ public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.S
     };
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);
+
+    public bool Equals(Primary? other)
+    => other?.Name.Equals(Name) ?? false;
+
+    public override int GetHashCode()
+    => Name.GetHashCode();
 }

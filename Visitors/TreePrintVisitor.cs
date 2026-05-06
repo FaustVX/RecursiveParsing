@@ -29,21 +29,21 @@ public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
         _depth--;
         Debug.Assert(_depth == 0);
     }
-    void IVisitor.Enter(Declaration file)
+    void IVisitor.Enter(Declaration declaration)
     {
-        Debug.Assert(_depth != 0);
-        PrintTree(input.Span, file, isTerminal: false);
+        Debug.Assert(_depth == 1);
+        PrintTree(input.Span, declaration, isTerminal: false);
         _depth++;
     }
     void IVisitor.Exit(Declaration declaration)
     {
         _depth--;
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth == 1);
     }
 
     void IVisitor.Enter(Choice choice)
     {
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
         PrintTree(input.Span, choice, isTerminal: false);
         _depth++;
     }
@@ -51,12 +51,12 @@ public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
     void IVisitor.Exit(Choice choice)
     {
         _depth--;
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
     }
 
     void IVisitor.Enter(Sequence sequence)
     {
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
         PrintTree(input.Span, sequence, isTerminal: false);
         _depth++;
     }
@@ -64,12 +64,12 @@ public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
     void IVisitor.Exit(Sequence sequence)
     {
         _depth--;
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
     }
 
     void IVisitor.Enter(Postfix postfix)
     {
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
         PrintTree(input.Span, postfix, isTerminal: false);
         _depth++;
     }
@@ -77,12 +77,12 @@ public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
     void IVisitor.Exit(Postfix postfix)
     {
         _depth--;
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
     }
 
     void IVisitor.Visit(Primary primary)
     {
-        Debug.Assert(_depth != 0);
+        Debug.Assert(_depth >= 2);
         PrintTree(input.Span, primary, isTerminal: true);
     }
 }

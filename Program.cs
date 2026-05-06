@@ -20,8 +20,10 @@ if (doubleParseSteps != Print.None)
 {
     Console.WriteLine("Double parsing...");
     input = sb;
+    var previousAST = treeNode;
     sb = Parse(input, ref treeNode, doubleParseSteps);
     Debug.Assert(input == sb);
+    Debug.Assert(previousAST.Equals(treeNode, TreeNode.EqualityComparer.Instance));
 }
 
 static string Parse(string input, ref TreeNode? treeNode, Print mode)
