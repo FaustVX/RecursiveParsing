@@ -234,21 +234,6 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
             /// <code>
             /// var start = tokenizer.CurrentSpan.Start;
         """);
-        TreeNode.AppendLine($$"""
-
-        /// <summary>
-        /// <code>{{ebnf}}</code>
-        /// </summary>
-        public partial record class {{declaration.Id.Name}}(Range Span) : TreeNode(Span)
-        {
-            public override void Accept(IVisitor visitor)
-            {
-                visitor.Enter(this);
-                visitor.Visit(this);
-                visitor.Exit(this);
-            }
-        }
-        """);
     }
     void IVisitor.Visit(Declaration declaration)
     {
@@ -294,12 +279,9 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
             /// return new {{declaration.Id.Name}}(statements, start..end);
             /// </code>
             /// </remarks>
-            private partial {{declaration.Id.Name}} Parse_{{declaration.Id.Name}}(Tokenizer tokenizer);
+            private partial TreeNode Parse_{{declaration.Id.Name}}(Tokenizer tokenizer);
 
         """);
-        IVisitor.AppendLine($$"""    void Enter({{declaration.Id.Name}} {{declaration.Id.Name}}) {}""");
-        IVisitor.AppendLine($$"""    void Visit({{declaration.Id.Name}} {{declaration.Id.Name}}) {}""");
-        IVisitor.AppendLine($$"""    void Exit({{declaration.Id.Name}} {{declaration.Id.Name}}) {}""");
     }
     void IVisitor.Exit(Phases.Parse.File file)
     {
