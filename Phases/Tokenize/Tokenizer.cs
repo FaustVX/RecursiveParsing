@@ -86,17 +86,17 @@ public partial class Tokenizer(string input)
                 } while (_input.First is not ('\r' or '\n') and char c && char.IsWhiteSpace(c));
                 return new Token.WhiteSpace(input[..length].ToString());
             }
-            case ':' and var symbol: // 2-symbol
+            case ':': // 1 or 2-symbol
                 _input++;
                 if (_input.First is '=' and var equals)
                 {
                     _input++;
                     length = 2;
-                    return new Token.Symbol($"{symbol}{equals}");
+                    return new Token.Symbol($":{equals}");
                 }
-                else
-                    throw new ExpectedTokenizerException(_i + 1, '=', _input.First);
-            case ('(' or ')' or '?' or '+' or '*' or '|') and var symbol: // single symbol
+                length = 1;
+                return new Token.Symbol(":");
+            case ('(' or ')' or '?' or '+' or '*' or '|' or ',') and var symbol: // single symbol
                 _input++;
                 length = 1;
                 return new Token.Symbol(symbol.ToString());

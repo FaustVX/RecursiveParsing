@@ -1,7 +1,19 @@
-file := declaration*
-declaration := ID ":=" expression EOL+
-expression := choice
-choice := sequence ("|" sequence)*
-sequence := postfix+
-postfix := primary ("?" | "+" | "*")?
-primary := ID | TERMINAL | STRING | "(" expression ")"
+primary : expression
+expression : tree-node
+unary-expr("TokenSpan" "Token", "Expression" "Expr") : expression
+binary-expr("TokenSpan" "Token", "Expression" "Left", "Expression" "Right") : expression
+statement : tree-node
+declaration : statement
+node : statement
+file : statement
+
+file: file := node+ EOL+ declaration+
+node: node := ID call? ":" ID call? EOL
+declaration: declaration := ID (":" ID)? ":=" expression EOL
+expression: expression := choice
+choice: binary-expr := sequence ("|" sequence)*
+sequence: binary-expr := postfix+
+postfix: unary-expr := primary ("?" | "+" | "*")?
+primary: primary := ID | TERMINAL | STRING | "(" expression ")"
+call := "(" args? ")"
+args := expression ("," expression)*

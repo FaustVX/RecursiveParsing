@@ -24,10 +24,21 @@ public class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
         PrintTree(input.Span, file, isTerminal: false);
         _depth++;
     }
-    void IVisitor.Exit(Phases.Parse.File declaration)
+    void IVisitor.Exit(Phases.Parse.File file)
     {
         _depth--;
         Debug.Assert(_depth == 0);
+    }
+    void IVisitor.Enter(Node node)
+    {
+        Debug.Assert(_depth == 1);
+        PrintTree(input.Span, node, isTerminal: false);
+        _depth++;
+    }
+    void IVisitor.Exit(Node node)
+    {
+        _depth--;
+        Debug.Assert(_depth == 1);
     }
     void IVisitor.Enter(Declaration declaration)
     {

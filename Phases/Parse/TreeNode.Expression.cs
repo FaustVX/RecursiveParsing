@@ -37,7 +37,7 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
     => StructuralEquals(Expressions, other?.Expressions);
 
     public override int GetHashCode()
-    => Expressions.GetHashCode();
+    => HashCode.Combine(Expressions);
 }
 
 /// <summary>
@@ -62,7 +62,7 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
     => StructuralEquals(Expressions, other?.Expressions);
 
     public override int GetHashCode()
-    => Expressions.GetHashCode();
+    => HashCode.Combine(Expressions);
 }
 
 /// <summary>
@@ -81,7 +81,7 @@ public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : E
     => other?.Node.Equals(Node) ?? false;
 
     public override int GetHashCode()
-    => Node.GetHashCode();
+    => HashCode.Combine(Node);
 }
 
 public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.Span, NodePrecedence.Primary)
@@ -100,5 +100,5 @@ public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.S
     => other?.Name.Equals(Name) ?? false;
 
     public override int GetHashCode()
-    => Name.GetHashCode();
+    => HashCode.Combine(Name);
 }

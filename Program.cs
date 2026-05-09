@@ -9,7 +9,7 @@ using EBNFParser.Visitors;
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p, ..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = Print.CSharp;
+var printSteps = ~Print.Tokens;
 var doubleParseSteps = Print.None;
 
 TreeNode? treeNode = null;

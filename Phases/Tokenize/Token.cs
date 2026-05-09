@@ -125,7 +125,8 @@ public readonly partial struct Token : IUnion, IEquatable<Token>
         (Token.EOL, _) => false,
         (Token.EOF, Token.EOF) => true,
         (Token.EOF, _) => false,
-        (null, _) => false,
+        (null, null) => true,
+        (null, _) or (_, null) => false,
     };
 
     public string TokenString()

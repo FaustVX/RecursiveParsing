@@ -160,10 +160,8 @@ public partial class Parser(string input)
 
     public static void Expect(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
     {
-        tokenSpan = tokenizer.CurrentTokenSpan;
-        if (tokenizer.CurrentToken != token)
+        if (!TryConsume(tokenizer, token, out tokenSpan))
             throw new ParserExpectedException(tokenizer.CurrentTokenSpan, token);
-        tokenizer.ScanToken();
     }
 
     public static bool TryConsume(Tokenizer tokenizer, Token token)
@@ -171,9 +169,12 @@ public partial class Parser(string input)
 
     public static bool TryConsume(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
     {
-        tokenSpan = tokenizer.CurrentTokenSpan;
         if (tokenizer.CurrentToken != token)
+        {
+            tokenSpan = default;
             return false;
+        }
+        tokenSpan = tokenizer.CurrentTokenSpan;
         tokenizer.ScanToken();
         return true;
     }

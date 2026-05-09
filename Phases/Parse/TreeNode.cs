@@ -8,6 +8,9 @@ public interface IVisitor
     void Enter(File file) {}
     void Visit(File file) {}
     void Exit(File file) {}
+    void Enter(Node node) {}
+    void Visit(Node node) {}
+    void Exit(Node node) {}
     void Enter(Declaration declaration) {}
     void Visit(Declaration declaration) {}
     void Exit(Declaration declaration) {}
@@ -45,6 +48,7 @@ public abstract record class TreeNode(Range Span) : IStructuralEquatable
         => (x, y) switch
         {
             (File lhs, File rhs) => lhs.Equals(rhs),
+            (Node lhs, Node rhs) => lhs.Equals(rhs),
             (Declaration lhs, Declaration rhs) => lhs.Equals(rhs),
             (Choice lhs, Choice rhs) => lhs.Equals(rhs),
             (Sequence lhs, Sequence rhs) => lhs.Equals(rhs),
@@ -59,17 +63,22 @@ public abstract record class TreeNode(Range Span) : IStructuralEquatable
 }
 
 /// <summary>
-/// file := declaration*
+/// file := node+ EOL+ declaration+
 /// </summary>
-public record class File(ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
+public record class File(ImmutableArray<Node> Nodes, ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
 {
     public override void Accept(IVisitor visitor)
     {
         visitor.Enter(this);
-        for (int i = 0; i < Declarations.Length; i++)
+        for (int i = 0; i < Nodes.Length; i++)
         {
             if (i > 0)
                 visitor.Visit(this);
+            Nodes[i].Accept(visitor);
+        }
+        for (int i = 0; i < Declarations.Length; i++)
+        {
+            visitor.Visit(this);
             Declarations[i].Accept(visitor);
         }
 
@@ -77,29 +86,65 @@ public record class File(ImmutableArray<Declaration> Declarations, Range Span) :
     }
 
     public virtual bool Equals(File? other)
-    => StructuralEquals(Declarations, other?.Declarations);
+    => StructuralEquals(Nodes, other?.Nodes) && StructuralEquals(Declarations, other?.Declarations);
 
     public override int GetHashCode()
-    => Declarations.GetHashCode();
+    => HashCode.Combine(Nodes, Declarations);
 }
 
 /// <summary>
-/// declaration := ID ":=" expression EOL+
+/// node := ID call? ":" ID call? EOL
 /// </summary>
-public record class Declaration(Primary Id, Expression Expression, Range Span) : TreeNode(Span)
+public record class Node(Primary Id, ImmutableArray<Expression> Params, Primary Inherit, ImmutableArray<Expression> Args, Range Span) : TreeNode(Span)
+{
+    public override void Accept(IVisitor visitor)
+    {
+        visitor.Enter(this);
+        Id.Accept(visitor);
+        for (int i = 0; i < Params.Length; i++)
+        {
+            visitor.Visit(this);
+            Params[i].Accept(visitor);
+        }
+        visitor.Visit(this);
+        Inherit.Accept(visitor);
+        for (int i = 0; i < Args.Length; i++)
+        {
+            visitor.Visit(this);
+            Args[i].Accept(visitor);
+        }
+        visitor.Exit(this);
+    }
+
+    public virtual bool Equals(Node? other)
+    => (other?.Id.Equals(Id) ?? false) && StructuralEquals(Params, other?.Params) && (other?.Inherit.Equals(Inherit) ?? false) && StructuralEquals(Args, other?.Args);
+
+    public override int GetHashCode()
+    => HashCode.Combine(Id, Params, Inherit, Args);
+}
+
+/// <summary>
+/// declaration := ID (":" ID)? ":=" expression EOL
+/// </summary>
+public record class Declaration(Primary Id, Primary? Node, Expression Expression, Range Span) : TreeNode(Span)
 {
     public override void Accept(IVisitor visitor)
     {
         visitor.Enter(this);
         Id.Accept(visitor);
         visitor.Visit(this);
+        if (Node is {} node)
+        {
+            node.Accept(visitor);
+            visitor.Visit(this);
+        }
         Expression.Accept(visitor);
         visitor.Exit(this);
     }
 
     public virtual bool Equals(Declaration? other)
-    => (other?.Id.Equals(Id) ?? false) && (other?.Expression.Equals(Expression) ?? false);
+    => (other?.Id.Equals(Id) ?? false) && (other?.Node?.Equals(Node) ?? (Node, other) is (null, { Node: null })) && (other?.Expression.Equals(Expression) ?? false);
 
     public override int GetHashCode()
-    => Id.GetHashCode() | Expression.GetHashCode();
+    => HashCode.Combine(Id, Node, Expression);
 }
