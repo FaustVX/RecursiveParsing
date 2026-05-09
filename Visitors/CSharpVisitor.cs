@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using EBNFParser.Phases.Parse;
 
@@ -13,6 +14,7 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
     public StringBuilder Tokenizer { get; } = new();
     public string Namespace { get; } = @namespace;
     public string ParserClass { get; } = parserClass;
+    public Dictionary<Primary, string> IdToCSharp { get; private set; } = null!;
 
     private readonly PrettyPrintVisitor prettyPrintVisitor = new();
     private bool _isDeclarationBody = false;
@@ -35,6 +37,10 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
 
     void IVisitor.Enter(Phases.Parse.File file)
     {
+        var id = new IdToCSharpVisitor();
+        file.Accept(id);
+        IdToCSharp = id.Names;
+
         IVisitor.AppendLine($$"""
         namespace {{Namespace}};
 
@@ -276,10 +282,9 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
         _isDeclarationBody = false;
         Parser.AppendLine($$"""
             /// var end = tokenizer.CurrentSpan.End;
-            /// return new {{declaration.Id.Name}}(statements, start..end);
             /// </code>
             /// </remarks>
-            private partial TreeNode Parse_{{declaration.Id.Name}}(Tokenizer tokenizer);
+            private partial {{(declaration.Node is {} node ? IdToCSharp[node] : "TreeNode")}} Parse_{{IdToCSharp[declaration.Id]}}(Tokenizer tokenizer);
 
         """);
     }
@@ -396,5 +401,37 @@ public class CSharpVisitor(string @namespace, string parserClass) : IVisitor
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_precedences")]
         static extern ref readonly Stack<NodePrecedence> Precedences(PrettyPrintVisitor visitor);
+    }
+
+    private sealed class IdToCSharpVisitor : IVisitor
+    {
+        public Dictionary<Primary, string> Names = [];
+
+        void IVisitor.Visit(Primary primary)
+        {
+            if (primary is not { TokenSpan.Token: Phases.Tokenize.Token.Id, Name: var id })
+                return;
+            ref var name = ref CollectionsMarshal.GetValueRefOrAddDefault(Names, primary, out var exists);
+            if (exists)
+                return;
+            name = string.Create(id.Length - id.Count(c => c is '-'), id.AsSpan(), (c, s) =>
+            {
+                c[0] = char.ToUpperInvariant(s[0]);
+                c = c[1..];
+                s = s[1..];
+                while (!c.IsEmpty)
+                {
+                    if (s[0] is '-')
+                    {
+                        s = s[1..];
+                        c[0] = char.ToUpperInvariant(s[0]);
+                    }
+                    else
+                        c[0] = s[0];
+                    c = c[1..];
+                    s = s[1..];
+                }
+            });
+        }
     }
 }
