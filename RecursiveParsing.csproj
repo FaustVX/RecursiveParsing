@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <UsingTask TaskName="EBNFParser.ParseEBNFTask" AssemblyFile="lib\ebnf\bin\Debug\net11.0\EBNFParser.dll" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +8,14 @@
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="lib\ebnf\EBNFParser.csproj" />
+  </ItemGroup>
+
+  <Target Name="_RunCustomTask" BeforeTargets="Build">
+    <ParseEBNFTask Namespace="RecursiveParsing" OutputFolder="out" EBNF_File="myLang.ebnf" />
+  </Target>
 
   <ItemGroup>
     <Compile Remove="lib\**" />

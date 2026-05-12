@@ -1,14 +1,27 @@
-statement                 := blockstatement
-blockstatement            := ("{" (statement)* "}") | expressionstatement
-expressionstatement       := expression ";"
-expression                := conditionnal
-conditionnal              := equation ("?" expression ":" conditionnal)?
-equation                  := relational (("==" | "!=") relational)?
-relational                := additive (("<" | ">" | "<=" | ">=") additive)?
-additive                  := term (("+" | "-") term)*
-term                      := unary (("*" | "/") unary)*
-unary                     := ("+" | "-") unary | exponentiation
-exponentiation            := postfix ("^" exponentiation)?
-postfix                   := primary ("!" | "(" args ")")*
-primary                   := ID | NUMBER | STRING | "(" expression ")"
-args                      := ( expression ( "," expression)* )?
+expression* : tree-node
+primary? : expression
+unary-expr*(token-span operator, expression expression) : expression
+prefix-expr?(token-span operator, expression expression) : unary-expr(operator, expression)
+postfix-expr?(expression expression, token-span operator) : unary-expr(operator, expression)
+binary-expr?(expression left, token-span operator, expression right) : expression
+ternary-expr?(expression left, token-span op-left, expression center, token-span op-right, expression right) : expression
+call-expr?(expression expression, expression* args) : expression
+statement* : tree-node
+expression-statement?(expression expression) : statement
+block-statement?(statement* statements) : statement
+file?(statement* statements) : tree-node
+
+statement: statement := block-statement | expression-statement
+block-statement: block-statement := ("{" (statement)* "}")
+expression-statement: expression-statement := expression ";"
+expression: expression := conditionnal
+conditionnal: expression := equation ("?" expression ":" conditionnal)?
+equation: expression := relational (("==" | "!=") relational)?
+relational: expression := additive (("<" | ">" | "<=" | ">=") additive)?
+additive: expression := term (("+" | "-") term)*
+term: expression := unary (("*" | "/") unary)*
+unary: expression := ("+" | "-") unary | exponentiation
+exponentiation: expression := postfix ("^" exponentiation)?
+postfix: expression := primary ("!" | "(" args ")")*
+primary: expression := ID | NUMBER | STRING | "(" expression ")"
+args: expression* := ( expression ( "," expression)* )?

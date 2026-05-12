@@ -1,9 +1,9 @@
+#nullable enable
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-
-namespace RecursiveParsing;
+namespace RecursiveParsing.Tokenize;
 
 public readonly record struct TokenSpan(Token.WhiteSpace Before, Token Token, Range Span)
 {
@@ -75,6 +75,27 @@ public readonly partial struct Token : IUnion, IEquatable<Token>
             _ => sb.Append(c),
         };
     }
+
+    // public bool Equals(Token token)
+    // => (this, token) switch
+    // {
+    //     (Token.WhiteSpace, Token.WhiteSpace { Value: null }) => true,
+    //     (Token.WhiteSpace { Value: var vl }, Token.WhiteSpace { Value: var vr }) => vl == vr,
+    //     (Token.WhiteSpace, _) => false,
+    //     (Token.EOL, Token.EOL) => true,
+    //     (Token.EOL, _) => false,
+    //     (Token.EOF, Token.EOF) => true,
+    //     (Token.EOF, _) => false,
+    //     (null, _) => false,
+    // };
+
+    // public string TokenString()
+    // => this switch
+    // {
+    //     Token.WhiteSpace { Value: string v } => v,
+    //     Token.EOL => "\\n",
+    //     Token.WhiteSpace or Token.EOF or null => "",
+    // };
 
     public override bool Equals([NotNullWhen(true)] object? obj)
     => obj is Token r && Equals(r);

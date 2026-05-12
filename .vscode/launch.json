@@ -11,8 +11,7 @@
             "preLaunchTask": "build proj",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/net11.0/RecursiveParsing.dll",
-            "args": ["input.txt"],
-            "cwd": "${workspaceFolder}",
+            "args": ["${file}"],
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false
@@ -27,8 +26,7 @@
             "preLaunchTask": "build lib",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/lib/ebnf/bin/Debug/net11.0/EBNFParser.dll",
-            "args": ["${workspaceFolder}/myLang.ebnf"],
-            "cwd": "${workspaceFolder}/lib/ebnf",
+            "args": ["${file}", "RecursiveParsing"],
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

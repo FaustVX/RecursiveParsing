@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Tokenize;
 
 public partial class Tokenizer
 {

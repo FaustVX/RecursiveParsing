@@ -1,21 +1,30 @@
-using System.Text;
-
-
-namespace RecursiveParsing;
+#nullable enable
+namespace RecursiveParsing.Tokenize;
 
 [Serializable]
-public abstract class TokenizerException(int pos) : Exception
+public abstract class EBNFException : Exception
+{
+    public abstract Range Range { get; }
+    public abstract string ErrorCode { get; }
+    public abstract string SubCategory { get; }
+}
+
+[Serializable]
+public abstract class TokenizerException(int pos) : EBNFException
 {
     public int Pos { get; } = pos;
+    public override Range Range => Pos..Pos;
 }
 
 [Serializable]
 public class UnexpectedTokenizerException(int pos, char? unexpected) : TokenizerException(pos)
 {
     public char? Unexpected { get; } = unexpected;
+    public override string ErrorCode => "EB_0001";
+    public override string SubCategory => "Unexpected Token";
 
-    public override string ToString()
-    => $"Unexpected token ({(Unexpected is char unexpected ? Token.Escape([unexpected]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
+    public override string Message
+    => $"Unexpected token ({(Unexpected is char unexpected ? Token.Escape([unexpected]) : "EOF")}) at pos: {Pos}";
 }
 
 [Serializable]
@@ -23,9 +32,11 @@ public class ExpectedTokenizerException(int pos, char expected, char? actual) : 
 {
     public char Expected { get; } = expected;
     public char? Actual { get; } = actual;
+    public override string ErrorCode => "EB_0002";
+    public override string SubCategory => "Expected Token";
 
-    public override string ToString()
-    => $"Expected token ({Token.Escape([Expected])}) but got ({(Actual is char actual ? Token.Escape([actual]) : "EOF")}) at pos: {Pos}\n" + base.ToString();
+    public override string Message
+    => $"Expected token ({Token.Escape([Expected])}) but got ({(Actual is char actual ? Token.Escape([actual]) : "EOF")}) at pos: {Pos}";
 }
 
 public partial class Tokenizer(string input)

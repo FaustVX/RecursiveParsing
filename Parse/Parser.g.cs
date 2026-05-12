@@ -1,49 +1,45 @@
-
-using System.Collections;
+#nullable enable
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-// using EBNFParser.Phases.Tokenize;
+using RecursiveParsing.Tokenize;
 
-namespace RecursiveParsing;
+namespace RecursiveParsing.Parse;
 
 public partial class Parser(string input)
 {
     public Tokenizer Tokenizer { get; } = new(input);
 
     /// <summary>
-    /// <c>statement := blockstatement</c>
+    /// <c>statement : statement := block-statement | expression-statement</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
-    /// Parse_Primary (blockstatement);
+    /// Parse_Choice (block-statement | expression-statement):
+    ///     Parse_Primary (block-statement);
+    ///     Parse_Primary (expression-statement);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new statement(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial statement Parse_statement(Tokenizer tokenizer);
+    private partial Statement Parse_Statement(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>blockstatement := "{" statement* "}" | expressionstatement</c>
+    /// <c>block-statement : block-statement := "{" statement* "}"</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
-    /// Parse_Choice ("{" statement* "}" | expressionstatement):
-    ///     Parse_Sequence ("{" statement* "}"):
-    ///         Parse_Primary ("{");
-    ///         Parse_Postfix (statement*):
-    ///             Parse_Primary (statement);
-    ///         Parse_Primary ("}");
-    ///     Parse_Primary (expressionstatement);
+    /// Parse_Sequence ("{" statement* "}"):
+    ///     Parse_Primary ("{");
+    ///     Parse_Postfix (statement*):
+    ///         Parse_Primary (statement);
+    ///     Parse_Primary ("}");
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new blockstatement(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial blockstatement Parse_blockstatement(Tokenizer tokenizer);
+    private partial BlockStatement Parse_BlockStatement(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>expressionstatement := expression ";"</c>
+    /// <c>expression-statement : expression-statement := expression ";"</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -52,44 +48,43 @@ public partial class Parser(string input)
     ///     Parse_Primary (expression);
     ///     Parse_Primary (";");
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new expressionstatement(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial expressionstatement Parse_expressionstatement(Tokenizer tokenizer);
+    private partial ExpressionStatement Parse_ExpressionStatement(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>expression := conditionnal</c>
+    /// <c>expression : expression := conditionnal</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
     /// Parse_Primary (conditionnal);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new expression(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial TreeNode Parse_expression(Tokenizer tokenizer);
+    private partial Expression Parse_Expression(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>conditionnal := equation "?" expression ":" conditionnal</c>
+    /// <c>conditionnal : expression := equation ("?" expression ":" conditionnal)?</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
-    /// Parse_Sequence (equation "?" expression ":" conditionnal):
+    /// Parse_Sequence (equation ("?" expression ":" conditionnal)?):
     ///     Parse_Primary (equation);
-    ///     Parse_Primary ("?");
-    ///     Parse_Primary (expression);
-    ///     Parse_Primary (":");
-    ///     Parse_Primary (conditionnal);
+    ///     Parse_Postfix (("?" expression ":" conditionnal)?):
+    ///         Parse_Sequence ("?" expression ":" conditionnal):
+    ///             Parse_Primary ("?");
+    ///             Parse_Primary (expression);
+    ///             Parse_Primary (":");
+    ///             Parse_Primary (conditionnal);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new conditionnal(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial conditionnal Parse_conditionnal(Tokenizer tokenizer);
+    private partial Expression Parse_Conditionnal(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>equation := relational (("==" | "!=") relational)?</c>
+    /// <c>equation : expression := relational (("==" | "!=") relational)?</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -103,35 +98,33 @@ public partial class Parser(string input)
     ///                 Parse_Primary ("!=");
     ///             Parse_Primary (relational);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new equation(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial equation Parse_equation(Tokenizer tokenizer);
+    private partial Expression Parse_Equation(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>relational := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?</c>
+    /// <c>relational : expression := additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
-    /// Parse_Sequence (additive (("<" | ">" | "<=" | ">=") additive)?):
+    /// Parse_Sequence (additive (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?):
     ///     Parse_Primary (additive);
-    ///     Parse_Postfix ((("<" | ">" | "<=" | ">=") additive)?):
-    ///         Parse_Sequence (("<" | ">" | "<=" | ">=") additive):
-    ///             Parse_Choice ("<" | ">" | "<=" | ">="):
-    ///                 Parse_Primary ("<");
-    ///                 Parse_Primary (">");
-    ///                 Parse_Primary ("<=");
-    ///                 Parse_Primary (">=");
+    ///     Parse_Postfix ((("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive)?):
+    ///         Parse_Sequence (("&lt;" | "&gt;" | "&lt;=" | "&gt;=") additive):
+    ///             Parse_Choice ("&lt;" | "&gt;" | "&lt;=" | "&gt;="):
+    ///                 Parse_Primary ("&lt;");
+    ///                 Parse_Primary ("&gt;");
+    ///                 Parse_Primary ("&lt;=");
+    ///                 Parse_Primary ("&gt;=");
     ///             Parse_Primary (additive);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new relational(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial relational Parse_relational(Tokenizer tokenizer);
+    private partial Expression Parse_Relational(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>additive := term (("+" | "-") term)*</c>
+    /// <c>additive : expression := term (("+" | "-") term)*</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -145,13 +138,12 @@ public partial class Parser(string input)
     ///                 Parse_Primary ("-");
     ///             Parse_Primary (term);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new additive(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial additive Parse_additive(Tokenizer tokenizer);
+    private partial Expression Parse_Additive(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>term := unary (("*" | "/") unary)*</c>
+    /// <c>term : expression := unary (("*" | "/") unary)*</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -165,13 +157,12 @@ public partial class Parser(string input)
     ///                 Parse_Primary ("/");
     ///             Parse_Primary (unary);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new term(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial term Parse_term(Tokenizer tokenizer);
+    private partial Expression Parse_Term(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>unary := ("+" | "-") unary | exponentiation</c>
+    /// <c>unary : expression := ("+" | "-") unary | exponentiation</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -184,13 +175,12 @@ public partial class Parser(string input)
     ///         Parse_Primary (unary);
     ///     Parse_Primary (exponentiation);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new unary(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial unary Parse_unary(Tokenizer tokenizer);
+    private partial Expression Parse_Unary(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>exponentiation := postfix ("^" exponentiation)?</c>
+    /// <c>exponentiation : expression := postfix ("^" exponentiation)?</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -202,13 +192,12 @@ public partial class Parser(string input)
     ///             Parse_Primary ("^");
     ///             Parse_Primary (exponentiation);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new exponentiation(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial exponentiation Parse_exponentiation(Tokenizer tokenizer);
+    private partial Expression Parse_Exponentiation(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>postfix := primary ("!" | "(" args ")")*</c>
+    /// <c>postfix : expression := primary ("!" | "(" args ")")*</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -223,13 +212,12 @@ public partial class Parser(string input)
     ///                 Parse_Primary (args);
     ///                 Parse_Primary (")");
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new postfix(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial postfix Parse_postfix(Tokenizer tokenizer);
+    private partial Expression Parse_Postfix(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>primary := ID | NUMBER | STRING | "(" expression ")"</c>
+    /// <c>primary : expression := ID | NUMBER | STRING | "(" expression ")"</c>
     /// </summary>
     /// <remarks>
     /// <code>
@@ -243,17 +231,17 @@ public partial class Parser(string input)
     ///         Parse_Primary (expression);
     ///         Parse_Primary (")");
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new primary(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial TreeNode Parse_primary(Tokenizer tokenizer);
+    private partial Expression Parse_Primary(Tokenizer tokenizer);
 
     /// <summary>
-    /// <c>args := (expression ("," expression)*)?</c>
+    /// <c>args : expression* := (expression ("," expression)*)?</c>
     /// </summary>
     /// <remarks>
     /// <code>
     /// var start = tokenizer.CurrentSpan.Start;
+    /// Parse_Postfix (expression*):
     /// Parse_Postfix ((expression ("," expression)*)?):
     ///     Parse_Sequence (expression ("," expression)*):
     ///         Parse_Primary (expression);
@@ -262,16 +250,12 @@ public partial class Parser(string input)
     ///                 Parse_Primary (",");
     ///                 Parse_Primary (expression);
     /// var end = tokenizer.CurrentSpan.End;
-    /// return new args(statements, start..end);
     /// </code>
     /// </remarks>
-    private partial args Parse_args(Tokenizer tokenizer);
+    private partial System.Collections.Immutable.ImmutableArray<Expression> Parse_Args(Tokenizer tokenizer);
 
     protected static class Helper
     {
-        public static Func<Tokenizer, ImmutableArray<TAny>> ParseAny<TAny>(Func<Tokenizer, TAny> parser, Func<TokenSpan, bool> endOfParse)
-        where TAny : TreeNode
-        => t => ParseAny(parser, t, endOfParse);
         public static ImmutableArray<TAny> ParseAny<TAny>(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
         where TAny : TreeNode
         {
@@ -284,8 +268,6 @@ public partial class Parser(string input)
             }
         }
 
-        public static Func<Tokenizer, ImmutableArray<Token>> ParseAny(Token token)
-        => t => ParseAny(token, t);
         public static ImmutableArray<Token> ParseAny(Token token, Tokenizer tokenizer)
         {
             return [.. ParseTokens(token, tokenizer)];
@@ -299,9 +281,6 @@ public partial class Parser(string input)
             }
         }
 
-        public static Func<Tokenizer, ImmutableArray<TMultiple>> ParseMultiple<TMultiple>(Func<Tokenizer, TMultiple> parser, Func<TokenSpan, bool> endOfParse)
-        where TMultiple : TreeNode
-        => t => ParseMultiple(parser, t, endOfParse);
         public static ImmutableArray<TMultiple> ParseMultiple<TMultiple>(Func<Tokenizer, TMultiple> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
         where TMultiple : TreeNode
         {
@@ -314,8 +293,6 @@ public partial class Parser(string input)
             }
         }
 
-        public static Func<Tokenizer, ImmutableArray<Token>> ParseMultiple(Token token)
-        => t => ParseMultiple(token, t);
         public static ImmutableArray<Token> ParseMultiple(Token token, Tokenizer tokenizer)
         {
             return [.. ParseTokens(token, tokenizer)];
@@ -334,10 +311,8 @@ public partial class Parser(string input)
 
         public static void Expect(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
         {
-            tokenSpan = tokenizer.CurrentTokenSpan;
-            if (tokenizer.CurrentToken != token)
+            if (!TryConsume(tokenizer, token, out tokenSpan))
                 throw new ParserExpectedException(tokenizer.CurrentTokenSpan, token);
-            tokenizer.ScanToken();
         }
 
         public static bool TryConsume(Tokenizer tokenizer, Token token)
@@ -345,9 +320,12 @@ public partial class Parser(string input)
 
         public static bool TryConsume(Tokenizer tokenizer, Token token, out TokenSpan tokenSpan)
         {
-            tokenSpan = tokenizer.CurrentTokenSpan;
             if (tokenizer.CurrentToken != token)
+            {
+                tokenSpan = default;
                 return false;
+            }
+            tokenSpan = tokenizer.CurrentTokenSpan;
             tokenizer.ScanToken();
             return true;
         }
@@ -355,23 +333,28 @@ public partial class Parser(string input)
 }
 
 [Serializable]
-public abstract class ParserException(TokenSpan tokenSpan) : Exception
+public abstract class ParserException(TokenSpan tokenSpan) : EBNFException
 {
     public TokenSpan TokenSpan { get; } = tokenSpan;
+    public override Range Range => TokenSpan.Span;
 }
 
 [Serializable]
 public class ParserUnexpectedException(TokenSpan tokenSpan) : ParserException(tokenSpan)
 {
-    public override string ToString()
-    => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+    public override string ErrorCode => "EB_0003";
+    public override string SubCategory => "Unexpected Parser";
+    public override string Message
+    => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}";
 }
 
 [Serializable]
 public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : ParserException(tokenSpan)
 {
     public Token Expected { get; } = expected;
+    public override string ErrorCode => "EB_0004";
+    public override string SubCategory => "Expected Parser";
 
-    public override string ToString()
-    => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+    public override string Message
+    => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}";
 }
