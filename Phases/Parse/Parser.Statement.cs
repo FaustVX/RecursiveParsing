@@ -5,7 +5,7 @@ namespace EBNFParser.Phases.Parse;
 public partial class Parser
 {
     /// <summary>
-    /// file := node+ EOL+ declaration+
+    /// file: file := node+ EOL+ declaration+
     /// </summary>
     private File ParseFile(Tokenizer tokenizer)
     {
@@ -18,20 +18,20 @@ public partial class Parser
     }
 
     /// <summary>
-    /// node := ID call? ":" ID call? EOL
+    /// node: node := postfix call? ":" ID call? EOL
     /// </summary>
     private Node ParseNode(Tokenizer tokenizer)
     {
         var start = tokenizer.CurrentSpan.Start;
-        Expect(tokenizer, new Token.Id(), out var id);
-        var @params = TryCall(tokenizer);
+        var id = (Postfix)ParsePostfix(tokenizer);
+        var @params = TryCall(tokenizer).Cast<Sequence>().ToImmutableArray();
         TokenSpan node = default;
         if (TryConsume(tokenizer, new Token.Symbol { Value = ":" }))
             Expect(tokenizer, new Token.Id(), out node);
-        var args = TryCall(tokenizer);
+        var args = TryCall(tokenizer).Cast<Primary>().ToImmutableArray();
         Expect(tokenizer, new Token.EOL());
         var end = tokenizer.PreviousSpan.End;
-        return new Node(new Primary(id), @params, new Primary(node), args, start..end);
+        return new Node(id, @params, new Primary(node), args, start..end);
 
         ImmutableArray<Expression> TryCall(Tokenizer tokenizer)
         => tokenizer.CurrentToken is Token.Symbol { Value : "(" }
@@ -40,24 +40,23 @@ public partial class Parser
     }
 
     /// <summary>
-    /// declaration := ID (":" ID)? ":=" expression EOL
+    /// declaration: declaration := ID ":" postfix ":=" expression EOL
     /// </summary>
     private Declaration ParseDeclaration(Tokenizer tokenizer)
     {
         var start = tokenizer.CurrentSpan.Start;
         Expect(tokenizer, new Token.Id(), out var id);
-        TokenSpan node = default;
-        if (TryConsume(tokenizer, new Token.Symbol { Value = ":" }))
-            Expect(tokenizer, new Token.Id(), out node);
+        Expect(tokenizer, new Token.Symbol { Value = ":" });
+        var node = ParsePostfix(tokenizer);
         Expect(tokenizer, new Token.Symbol { Value = ":=" });
         var expression = ParseExpression(tokenizer);
         Expect(tokenizer, new Token.EOL());
         var end = tokenizer.PreviousSpan.End;
-        return new Declaration(new Primary(id), (node == default) ? default : new Primary(node), expression, start..end);
+        return new Declaration(new Primary(id), node, expression, start..end);
     }
 
     /// <summary>
-    /// call := "(" args? ")"
+    /// call: expression* := "(" args? ")"
     /// </summary>
     private ImmutableArray<Expression> ParseCall(Tokenizer tokenizer)
     {
@@ -70,7 +69,7 @@ public partial class Parser
     }
 
     /// <summary>
-    /// args := expression ( "," expression)*
+    /// args: expression* := expression ("," expression)*
     /// </summary>
     private IEnumerable<Expression> ParseArgs(Tokenizer tokenizer)
     {

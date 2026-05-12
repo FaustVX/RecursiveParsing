@@ -5,25 +5,30 @@ using EBNFParser.Phases.Tokenize;
 namespace EBNFParser.Phases.Parse;
 
 [Serializable]
-public abstract class ParserException(TokenSpan tokenSpan) : Exception
+public abstract class ParserException(TokenSpan tokenSpan) : EBNFException
 {
     public TokenSpan TokenSpan { get; } = tokenSpan;
+    public override Range Range => TokenSpan.Span;
 }
 
 [Serializable]
 public class ParserUnexpectedException(TokenSpan tokenSpan) : ParserException(tokenSpan)
 {
-    public override string ToString()
-    => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+    public override string ErrorCode => "EB_0003";
+    public override string SubCategory => "Unexpected Parser";
+    public override string Message
+    => $"Unexpected token ({TokenSpan.Token}) at pos: {TokenSpan.Span}";
 }
 
 [Serializable]
 public class ParserExpectedException(TokenSpan tokenSpan, Token expected) : ParserException(tokenSpan)
 {
     public Token Expected { get; } = expected;
+    public override string ErrorCode => "EB_0004";
+    public override string SubCategory => "Expected Parser";
 
-    public override string ToString()
-    => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}\n" + base.ToString();
+    public override string Message
+    => $"Expected token {Expected} but got ({TokenSpan.Token}) at pos: {TokenSpan.Span}";
 }
 
 public partial class Parser(string input)
@@ -50,13 +55,7 @@ public partial class Parser(string input)
             {
                 return ParseFile(tokenizer);
             }
-            catch (ParserException ex)
-            {
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-                throw ex;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
-            catch (TokenizerException ex)
+            catch (EBNFException ex)
             {
 #pragma warning disable CA2200 // Rethrow to preserve stack details
                 throw ex;
@@ -90,13 +89,7 @@ public partial class Parser(string input)
             {
                 return ParseExpression(tokenizer);
             }
-            catch (ParserException ex)
-            {
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-                throw ex;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
-            catch (TokenizerException ex)
+            catch (EBNFException ex)
             {
 #pragma warning disable CA2200 // Rethrow to preserve stack details
                 throw ex;

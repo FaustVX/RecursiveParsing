@@ -5,13 +5,13 @@ namespace EBNFParser.Phases.Parse;
 public partial class Parser
 {
     /// <summary>
-    /// expression := choice
+    /// expression: expression := choice
     /// </summary>
     private Expression ParseExpression(Tokenizer tokenizer)
     => ParseChoice(tokenizer);
 
     /// <summary>
-    /// choice := sequence ("|" sequence)*
+    /// choice: expression := sequence ("|" sequence)*
     /// </summary>
     private Expression ParseChoice(Tokenizer tokenizer)
     {
@@ -31,7 +31,7 @@ public partial class Parser
     }
 
     /// <summary>
-    /// sequence := postfix+
+    /// sequence: expression := postfix+
     /// </summary>
     private Expression ParseSequence(Tokenizer tokenizer)
     {
@@ -44,7 +44,7 @@ public partial class Parser
     }
 
     /// <summary>
-    /// postfix := primary ("?" | "+" | "*")?
+    /// postfix: expression := primary ("?" | "+" | "*")?
     /// </summary>
     private Expression ParsePostfix(Tokenizer tokenizer)
     {
@@ -60,7 +60,7 @@ public partial class Parser
     }
 
     /// <summary>
-    /// primary := ID | TERMINAL | STRING | "(" expression ")"
+    /// primary: expression := ID | TERMINAL | STRING | "(" expression ")"
     /// </summary>
     private Expression ParsePrimary(Tokenizer tokenizer)
     {

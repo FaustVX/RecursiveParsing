@@ -8,12 +8,12 @@ using EBNFParser.Visitors;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = (args is [var p, ..] && System.IO.File.Exists(p)) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = ~Print.Tokens;
+var input = (args is [var p, var @namespace] && new FileInfo(p) is { Exists: true, Extension: ".ebnf" }) ? System.IO.File.ReadAllText(p) : throw new Exception();
+var printSteps = Print.CSharp;
 var doubleParseSteps = Print.None;
 
 TreeNode? treeNode = null;
-var sb = Parse(input, ref treeNode, printSteps);
+var sb = Parse(input, ref treeNode, printSteps, @namespace);
 treeNode!.Accept(new CheckIdentifierVisitor(throwOnError: false));
 
 if (doubleParseSteps != Print.None)
@@ -21,12 +21,12 @@ if (doubleParseSteps != Print.None)
     Console.WriteLine("Double parsing...");
     input = sb;
     var previousAST = treeNode;
-    sb = Parse(input, ref treeNode, doubleParseSteps);
+    sb = Parse(input, ref treeNode, doubleParseSteps, @namespace);
     Debug.Assert(input == sb);
     Debug.Assert(previousAST.Equals(treeNode, TreeNode.EqualityComparer.Instance));
 }
 
-static string Parse(string input, ref TreeNode? treeNode, Print mode)
+static string Parse(string input, ref TreeNode? treeNode, Print mode, string @namespace)
 {
     if (mode.HasFlag(Print.Tokens))
         PrintTokens(input);
@@ -40,7 +40,7 @@ static string Parse(string input, ref TreeNode? treeNode, Print mode)
     if (mode.HasFlag(Print.Tree))
         PrintTree(input, treeNode);
     if (mode.HasFlag(Print.CSharp))
-        CSharpPrint(treeNode);
+        CSharpPrint(treeNode, @namespace);
     if (mode.HasFlag(Print.Pretty))
         input = PrettyPrint(treeNode);
     return input;
@@ -72,15 +72,16 @@ static string PrettyPrint(TreeNode node)
     return value;
 }
 
-static void CSharpPrint(TreeNode treeNode)
+static void CSharpPrint(TreeNode treeNode, string @namespace)
 {
-    CSharpVisitor visitor = new("EBNFParser.Phases.Parse", "Parser");
+    CSharpVisitor visitor = new(@namespace);
     treeNode!.Accept(visitor);
     PrintSB(visitor.Parser);
     PrintSB(visitor.IVisitor);
     PrintSB(visitor.TreeNode);
     PrintSB(visitor.Token);
     PrintSB(visitor.Tokenizer);
+    PrintSB(visitor.TreePrintVisitor);
     static void PrintSB(StringBuilder sb, [CallerArgumentExpression(nameof(sb))]string expr = default!)
     {
         Console.WriteLine($"- {expr}:");

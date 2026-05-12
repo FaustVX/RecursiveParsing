@@ -13,10 +13,13 @@ public enum NodePrecedence
     Primary,
 }
 
+/// <summary>
+/// expression* : tree-node
+/// </summary>
 public abstract record class Expression(Range Span, NodePrecedence Precedence) : TreeNode(Span);
 
 /// <summary>
-/// choice := sequence ("|" sequence)*
+/// choice?(expression* expressions) : expression
 /// </summary>
 public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expression(Expressions[0].Span.Start..Expressions[^1].Span.End, NodePrecedence.Choice)
 {
@@ -41,7 +44,7 @@ public sealed record class Choice(ImmutableArray<Expression> Expressions) : Expr
 }
 
 /// <summary>
-/// sequence := postfix+
+/// choice?(expression* expressions) : expression
 /// </summary>
 public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Expression(Expressions[0].Span.Start..Expressions[^1].Span.End, NodePrecedence.Sequence)
 {
@@ -66,7 +69,7 @@ public sealed record class Sequence(ImmutableArray<Expression> Expressions) : Ex
 }
 
 /// <summary>
-/// postfix := primary ("?" | "+" | "*")?
+/// postfix?(expression node, token-span operator) : expression
 /// </summary>
 public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : Expression(Span, NodePrecedence.Postfix)
 {
@@ -84,6 +87,9 @@ public record class Postfix(Expression Node, TokenSpan Operator, Range Span) : E
     => HashCode.Combine(Node);
 }
 
+/// <summary>
+/// primary? : expression
+/// </summary>
 public sealed record class Primary(TokenSpan TokenSpan) : Expression(TokenSpan.Span, NodePrecedence.Primary)
 {
     public string Name { get; init; } = TokenSpan.Token switch

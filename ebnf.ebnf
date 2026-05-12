@@ -1,7 +1,20 @@
-file := declaration*
-declaration := ID ":=" expression EOL+
-expression := choice
-choice := sequence ("|" sequence)*
-sequence := postfix+
-postfix := primary ("?" | "+" | "*")?
-primary := ID | TERMINAL | STRING | "(" expression ")"
+expression* : tree-node
+primary? : expression
+unary-expr*(token-span operator, expression expression) : expression
+postfix-expr?(expression expression, token-span operator) : unary-expr(operator, expression)
+binary-expr?(expression left, token-span operator, expression right) : expression
+statement* : tree-node
+declaration?(primary id, expression node, expression expression) : statement
+node?(postfix id, expression* params, primary inherit, expression* args) : statement
+file?(node* nodes, declaration* declarations) : tree-node
+
+file: file := node+ EOL+ declaration+
+node: node := postfix call? ":" ID call? EOL
+declaration: declaration := ID ":" postfix ":=" expression EOL
+expression: expression := choice
+choice: expression := sequence ("|" sequence)*
+sequence: expression := postfix+
+postfix: postfix-expr := primary ("?" | "+" | "*")?
+primary: expression := ID | TERMINAL | STRING | "(" expression ")"
+call: expression* := "(" args? ")"
+args: expression* := expression ("," expression)*

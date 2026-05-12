@@ -63,7 +63,7 @@ public abstract record class TreeNode(Range Span) : IStructuralEquatable
 }
 
 /// <summary>
-/// file := node+ EOL+ declaration+
+/// file?(node* nodes, declaration* declarations) : tree-node
 /// </summary>
 public record class File(ImmutableArray<Node> Nodes, ImmutableArray<Declaration> Declarations, Range Span) : TreeNode(Span)
 {
@@ -93,9 +93,9 @@ public record class File(ImmutableArray<Node> Nodes, ImmutableArray<Declaration>
 }
 
 /// <summary>
-/// node := ID call? ":" ID call? EOL
+/// node?(postfix id, sequence* params, primary inherit, primary* args) : tree-node
 /// </summary>
-public record class Node(Primary Id, ImmutableArray<Expression> Params, Primary Inherit, ImmutableArray<Expression> Args, Range Span) : TreeNode(Span)
+public record class Node(Postfix Id, ImmutableArray<Sequence> Params, Primary Inherit, ImmutableArray<Primary> Args, Range Span) : TreeNode(Span)
 {
     public override void Accept(IVisitor visitor)
     {
@@ -124,9 +124,9 @@ public record class Node(Primary Id, ImmutableArray<Expression> Params, Primary 
 }
 
 /// <summary>
-/// declaration := ID (":" ID)? ":=" expression EOL
+/// declaration?(primary id, expression node, expression expression) : tree-node
 /// </summary>
-public record class Declaration(Primary Id, Primary? Node, Expression Expression, Range Span) : TreeNode(Span)
+public record class Declaration(Primary Id, Expression Node, Expression Expression, Range Span) : TreeNode(Span)
 {
     public override void Accept(IVisitor visitor)
     {
@@ -143,7 +143,7 @@ public record class Declaration(Primary Id, Primary? Node, Expression Expression
     }
 
     public virtual bool Equals(Declaration? other)
-    => (other?.Id.Equals(Id) ?? false) && (other?.Node?.Equals(Node) ?? (Node, other) is (null, { Node: null })) && (other?.Expression.Equals(Expression) ?? false);
+    => (other?.Id.Equals(Id) ?? false) && (other?.Node.Equals(Node) ?? false) && (other?.Expression.Equals(Expression) ?? false);
 
     public override int GetHashCode()
     => HashCode.Combine(Id, Node, Expression);
