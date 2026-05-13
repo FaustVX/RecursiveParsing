@@ -50,28 +50,15 @@
             }
         },
         {
-            "label": "publish",
+            "label": "parse EBNF",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "publish",
+                "build",
                 "${workspaceFolder}/RecursiveParsing.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+                "-t:ParseEBNF"
             ],
             "problemMatcher": "$msCompile"
         },
-        {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/RecursiveParsing.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        }
     ]
 }

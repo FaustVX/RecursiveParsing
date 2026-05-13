@@ -13,7 +13,7 @@
     <ProjectReference Include="lib\ebnf\EBNFParser.csproj" />
   </ItemGroup>
 
-  <Target Name="_RunCustomTask" BeforeTargets="Build">
+  <Target Name="ParseEBNF">
     <ParseEBNFTask Namespace="RecursiveParsing" OutputFolder="out" EBNF_File="myLang.ebnf" />
   </Target>
 
