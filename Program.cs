@@ -9,7 +9,7 @@ using EBNFParser.Visitors;
 // http://slebok.github.io/zoo/
 
 var input = (args is [var p, var @namespace] && new FileInfo(p) is { Exists: true, Extension: ".ebnf" }) ? System.IO.File.ReadAllText(p) : throw new Exception();
-var printSteps = Print.CSharp;
+var printSteps = Print.Tree;
 var doubleParseSteps = Print.None;
 
 TreeNode? treeNode = null;

@@ -25,7 +25,6 @@ public readonly partial struct Token
     public readonly record struct Terminal(string Value);
     public readonly record struct String(string Value)
     {
-
         public override string ToString()
         {
             var sb = new StringBuilder($$"""{{nameof(Token.String)}} { Value = """).Append('"');
@@ -73,7 +72,6 @@ public readonly partial struct Token : IUnion, IEquatable<Token>
     {
         var sb = new StringBuilder();
         foreach (var c in str)
-        {
             sb = c switch
             {
                 '"' => sb.Append("\\\""),
@@ -84,7 +82,6 @@ public readonly partial struct Token : IUnion, IEquatable<Token>
                 '\n' => sb.Append("\\n"),
                 _ => sb.Append(c),
             };
-        }
         return sb;
     }
 

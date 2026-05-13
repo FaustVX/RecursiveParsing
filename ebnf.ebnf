@@ -5,7 +5,7 @@ postfix-expr?(expression expression, token-span operator) : unary-expr(operator,
 binary-expr?(expression left, token-span operator, expression right) : expression
 statement* : tree-node
 declaration?(primary id, expression node, expression expression) : statement
-node?(postfix id, expression* params, primary inherit, expression* args) : statement
+node?(postfix-expr id, expression* params, primary inherit, expression* args) : statement
 file?(node* nodes, declaration* declarations) : tree-node
 
 file: file := node+ EOL+ declaration+

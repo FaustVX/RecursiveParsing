@@ -5,6 +5,12 @@ namespace EBNFParser.Phases.Tokenize;
 [Serializable]
 public abstract class EBNFException : Exception
 {
+    public enum ExceptionLevel
+    {
+        Warning,
+        Error,
+    }
+    public virtual ExceptionLevel Level => ExceptionLevel.Error;
     public abstract Range Range { get; }
     public abstract string ErrorCode { get; }
     public abstract string SubCategory { get; }
