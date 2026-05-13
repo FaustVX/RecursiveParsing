@@ -6,11 +6,15 @@ using EBNFParser.Phases.Tokenize;
 namespace EBNFParser.Visitors;
 
 [Serializable]
-public abstract class CheckIdentifierVisitorException : Exception;
+public abstract class CheckIdentifierVisitorException : EBNFException;
 
 [Serializable]
 public class AlreadyReferencedIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
+    public override Range Range => Id.Span;
+    public override string ErrorCode => "EB_0005";
+    public override string SubCategory => "Already referenced id";
+
     public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is already defined";
@@ -19,6 +23,10 @@ public class AlreadyReferencedIdentifierException(Primary id) : CheckIdentifierV
 [Serializable]
 public class InexistantIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
+    public override Range Range => Id.Span;
+    public override string ErrorCode => "EB_0006";
+    public override string SubCategory => "Inexistant id";
+
     public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is inexistant";
@@ -27,6 +35,10 @@ public class InexistantIdentifierException(Primary id) : CheckIdentifierVisitorE
 [Serializable]
 public class UnreadIdentifierException(Primary id) : CheckIdentifierVisitorException
 {
+    public override Range Range => Id.Span;
+    public override string ErrorCode => "EB_0007";
+    public override string SubCategory => "Unread id";
+
     public Primary Id { get; } = id;
 
     public override string Message => $"\"{Id.Name}\" at [{Id.Span}] is unread";
