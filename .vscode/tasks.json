@@ -58,7 +58,10 @@
                 "${workspaceFolder}/RecursiveParsing.csproj",
                 "-t:ParseEBNF"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "dependsOn":[
+                "build lib"
+            ]
         },
     ]
 }

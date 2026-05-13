@@ -36,8 +36,8 @@ partial record class Primary
     => visitor.Visit(this);
 
     public bool Equals(Primary? other)
-    => other?.Name.Equals(Name) ?? false;
+    => other?.TokenSpan.Token.Equals(TokenSpan.Token) ?? false;
 
     public override int GetHashCode()
-    => HashCode.Combine(Name);
+    => HashCode.Combine(TokenSpan.Token);
 }
