@@ -19,9 +19,21 @@ public sealed class ParseEBNFTask : Task
     [Required]
     public required string EBNF_File { get; init; }
     public string OutputFolder { get; init; } = "out";
+    public bool WaitForDebugger { get; init; } = false;
     public override bool Execute()
     {
 #if DEBUG
+        if (WaitForDebugger && !Debugger.IsAttached)
+        {
+            Console.Write("Waiting for debugger ");
+            do
+            {
+                Console.Write('.');
+                Thread.Sleep(100);
+            }
+            while (!Debugger.IsAttached);
+        }
+
         Debugger.Break();
 #endif
         try
@@ -32,18 +44,12 @@ public sealed class ParseEBNFTask : Task
                 return false;
             }
             var input = File.ReadAllText(EBNF_File);
-            TreeNode? treeNode = new Parser(input).ParseFile();
-            CheckIdentifierVisitor id_check = new(throwOnError: true);
+            var treeNode = new Parser(input).ParseFile();
+            CheckIdentifierVisitor id_check = new(throwOnError: false);
             treeNode!.Accept(id_check);
             CSharpVisitor generator = new(Namespace);
             treeNode!.Accept(generator);
             var rel = Path.GetRelativePath(Environment.CurrentDirectory, OutputFolder);
-            if (!string.IsNullOrWhiteSpace(OutputFolder))
-            {
-                // if (Directory.Exists($"{OutputFolder}"))
-                //     Directory.Delete($"{OutputFolder}", recursive: true);
-                Directory.CreateDirectory($"{OutputFolder}");
-            }
             Directory.CreateDirectory($"{OutputFolder}/Parse");
             Directory.CreateDirectory($"{OutputFolder}/Tokenize");
             Directory.CreateDirectory($"{OutputFolder}/Visitors");
