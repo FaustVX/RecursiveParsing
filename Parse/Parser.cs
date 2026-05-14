@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using RecursiveParsing.Tokenize;
 
 namespace RecursiveParsing.Parse;
-public partial class Parser
+sealed partial class Parser
 {
     public File ParseFile()
     {

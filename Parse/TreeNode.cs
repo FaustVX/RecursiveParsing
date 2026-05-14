@@ -22,7 +22,7 @@ partial record class Expression
     public required ExpressionPrecedence Precedence { get; init; }
 }
 
-partial record class Primary
+sealed partial record class Primary
 {
     public required TokenSpan TokenSpan { get; init; }
 

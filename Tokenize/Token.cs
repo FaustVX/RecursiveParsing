@@ -1,9 +1,8 @@
 using System.Text;
 
-
 namespace RecursiveParsing.Tokenize;
 
-public readonly partial struct Token
+partial struct Token
 {
     public Token(Token.Int i)
     => Value = i;

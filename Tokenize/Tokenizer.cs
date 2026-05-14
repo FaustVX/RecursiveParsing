@@ -2,7 +2,7 @@ using System.Text;
 
 namespace RecursiveParsing.Tokenize;
 
-public partial class Tokenizer
+sealed partial class Tokenizer
 {
     private partial Token? ScanTokenImpl(out int length)
     {
