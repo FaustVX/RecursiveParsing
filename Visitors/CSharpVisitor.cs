@@ -11,6 +11,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
 {
     public StringBuilder Parser { get; } = new();
     public StringBuilder IVisitor { get; } = new();
+    public StringBuilder Visitor { get; } = new();
     public StringBuilder TreeNode { get; } = new();
     public StringBuilder Token { get; } = new();
     public StringBuilder Tokenizer { get; } = new();
@@ -51,6 +52,14 @@ public class CSharpVisitor(string @namespace) : IVisitor
         namespace {{Namespace}}.Parse;
 
         public partial interface IVisitor
+        {
+        """);
+
+        Visitor.AppendLine($$"""
+        #nullable enable
+        namespace {{Namespace}}.Parse;
+
+        public partial class Visitor : IVisitor
         {
         """);
         Parser.AppendLine($$"""
@@ -294,7 +303,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
 
         namespace {{Namespace}}.Visitors;
 
-        public partial class TreePrintVisitor(ReadOnlyMemory<char> input) : IVisitor
+        public partial class TreePrintVisitor(ReadOnlyMemory<char> input) : Visitor
         {
             private int _depth = 0;
             private static readonly Dictionary<int, string> _indent = [];
@@ -365,20 +374,26 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 {
                     case 0:
                     {
-                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
                         break;
                     }
                     case 1:
                     {
-                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
-                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
                         break;
                     }
                     case > 1:
                     {
-                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
-                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
-                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Enter({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Visit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
+                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary);""");
+                        Visitor.AppendLine($$"""    public virtual void Exit({{IdToCSharp[(Primary)node.Id.Node]}} primary) {}""");
                         break;
                     }
                 }
@@ -473,7 +488,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 if (paramsCount is 0)
                     TreePrintVisitor.AppendLine($$"""
 
-                        void IVisitor.Visit({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
+                        public override void Visit({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
                         {
                             PrintTree(input.Span, elem, isTerminal: true);
                         }
@@ -481,13 +496,13 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 else
                     TreePrintVisitor.AppendLine($$"""
 
-                        void IVisitor.Enter({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
+                        public override void Enter({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
                         {
                             PrintTree(input.Span, elem, isTerminal: false);
                             _depth++;
                         }
 
-                        void IVisitor.Exit({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
+                        public override void Exit({{Namespace}}.Parse.{{IdToCSharp[(Primary)node.Id.Node]}} elem)
                         {
                             _depth--;
                         }
@@ -572,6 +587,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
     void IVisitor.Exit(Phases.Parse.File file)
     {
         IVisitor.AppendLine("}");
+        Visitor.AppendLine("}");
         Parser.AppendLine($$"""
             protected static class Helper
             {
