@@ -307,6 +307,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
         {
             private int _depth = 0;
             private static readonly Dictionary<int, string> _indent = [];
+        #pragma warning disable CS0628 // New protected member declared in sealed type
             protected string IndentSpaces(int depth)
             {
                 ref var indent = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(_indent, depth, out var exists);
@@ -317,6 +318,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 return indent = new string(s);
             }
             protected void PrintTree(ReadOnlySpan<char> input, TreeNode node, bool isTerminal)
+        #pragma warning restore CS0628 // New protected member declared in sealed type
             => Console.WriteLine($"{IndentSpaces(_depth)}{node.GetType().Name} = [{node.Span}]{input[node.Span]}{(isTerminal ? "" : ":")}");
         """);
     }
@@ -589,7 +591,9 @@ public class CSharpVisitor(string @namespace) : IVisitor
         IVisitor.AppendLine("}");
         Visitor.AppendLine("}");
         Parser.AppendLine($$"""
+        #pragma warning disable CS0628 // New protected member declared in sealed type
             protected static class Helper
+        #pragma warning restore CS0628 // New protected member declared in sealed type
             {
                 public static ImmutableArray<TAny> ParseAny<TAny>(Func<Tokenizer, TAny> parser, Tokenizer tokenizer, Func<TokenSpan, bool> endOfParse)
                 where TAny : TreeNode
