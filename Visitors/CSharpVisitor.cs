@@ -109,8 +109,8 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 {
         """);
         foreach (var node in file.Nodes)
-            if (node.Id.Operator.Token is not Phases.Tokenize.Token.Symbol { Value: "*" })
-                TreeNode.AppendLine($$"""            ({{IdToCSharpPascal[(Primary)node.Id.Node]}} lhs, {{IdToCSharpPascal[(Primary)node.Id.Node]}} rhs) => lhs.Equals(rhs),""");
+            if (node.Id is { Operator.Token: not Phases.Tokenize.Token.Symbol { Value: "*" }, Node: Primary p})
+                TreeNode.AppendLine($$"""            ({{IdToCSharpPascal[p]}} lhs, {{IdToCSharpPascal[p]}} rhs) => lhs.Equals(rhs),""");
         TreeNode.AppendLine($$"""
                     _ => false,
                 };
@@ -375,30 +375,33 @@ public class CSharpVisitor(string @namespace) : IVisitor
                         Primary or Postfix => 0,
                         _ => throw new UnreachableException(),
                     });
+                var n = (Primary)node.Id.Node;
+                var type  = IdToCSharpPascal[n];
+                var param = IdToCSharpCamel [n];
                 switch (paramsCount)
                 {
                     case 0:
                     {
-                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Visit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
+                        IVisitor.AppendLine($$"""    void Visit({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Visit({{type}} {{param}}) {}""");
                         break;
                     }
                     case 1:
                     {
-                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Enter({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
-                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Exit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
+                        IVisitor.AppendLine($$"""    void Enter({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Enter({{type}} {{param}}) {}""");
+                        IVisitor.AppendLine($$"""    void Exit({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Exit({{type}} {{param}}) {}""");
                         break;
                     }
                     case > 1:
                     {
-                        IVisitor.AppendLine($$"""    void Enter({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Enter({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
-                        IVisitor.AppendLine($$"""    void Visit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Visit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
-                        IVisitor.AppendLine($$"""    void Exit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}});""");
-                        Visitor.AppendLine($$"""    public virtual void Exit({{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}}) {}""");
+                        IVisitor.AppendLine($$"""    void Enter({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Enter({{type}} {{param}}) {}""");
+                        IVisitor.AppendLine($$"""    void Visit({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Visit({{type}} {{param}}) {}""");
+                        IVisitor.AppendLine($$"""    void Exit({{type}} {{param}});""");
+                        Visitor.AppendLine($$"""    public virtual void Exit({{type}} {{param}}) {}""");
                         break;
                     }
                 }
@@ -413,37 +416,39 @@ public class CSharpVisitor(string @namespace) : IVisitor
                     {
                         case [Postfix { Node: Primary { Name: not ("token-span" or "token") },  Operator.Token: Phases.Tokenize.Token.Symbol { Value: "*" } }, Primary prop]:
                         {
+                            var p = IdToCSharpPascal[prop];
                             if (isFirst)
                                 TreeNode.AppendLine($$"""
-                                        for (var i = 0; i < {{IdToCSharpPascal[prop]}}.Length; i++)
+                                        for (var i = 0; i < {{p}}.Length; i++)
                                         {
                                             if (i > 0)
                                                 visitor.Visit(this);
-                                            {{IdToCSharpPascal[prop]}}[i].Accept(visitor);
+                                            {{p}}[i].Accept(visitor);
                                         }
                                 """);
                             else
                                 TreeNode.AppendLine($$"""
-                                        for (var i = 0; i < {{IdToCSharpPascal[prop]}}.Length; i++)
+                                        for (var i = 0; i < {{p}}.Length; i++)
                                         {
                                             visitor.Visit(this);
-                                            {{IdToCSharpPascal[prop]}}[i].Accept(visitor);
+                                            {{p}}[i].Accept(visitor);
                                         }
                                 """);
                             break;
                         }
                         case [Postfix { Node: Primary { Name: not ("token-span" or "token") }, Operator.Token: Phases.Tokenize.Token.Symbol { Value: "?" } }, Primary prop]:
                         {
+                            var p = IdToCSharpPascal[prop];
                             if (isFirst || paramsCount is not > 1)
                                 TreeNode.AppendLine($$"""
-                                        if ({{IdToCSharpPascal[prop]}} is {} {{IdToCSharpCamel[prop]}})
+                                        if ({{p}} is {} {{IdToCSharpCamel[prop]}})
                                         {
                                             _node.Accept(visitor);
                                         }
                                 """);
                             else
                                 TreeNode.AppendLine($$"""
-                                        if ({{IdToCSharpPascal[prop]}} is {} {{IdToCSharpCamel[prop]}})
+                                        if ({{p}} is {} {{IdToCSharpCamel[prop]}})
                                         {
                                             visitor.Visit(this);
                                             _node.Accept(visitor);
@@ -453,14 +458,15 @@ public class CSharpVisitor(string @namespace) : IVisitor
                         }
                         case [Primary { Name: not ("token-span" or "token") }, Primary prop]:
                         {
+                            var p = IdToCSharpPascal[prop];
                             if (isFirst || paramsCount is not > 1)
                                 TreeNode.AppendLine($$"""
-                                        {{IdToCSharpPascal[prop]}}.Accept(visitor);
+                                        {{p}}.Accept(visitor);
                                 """);
                             else
                                 TreeNode.AppendLine($$"""
                                         visitor.Visit(this);
-                                        {{IdToCSharpPascal[prop]}}.Accept(visitor);
+                                        {{p}}.Accept(visitor);
                                 """);
                             break;
                         }
@@ -478,7 +484,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 TreeNode.AppendLine($$"""
                     }
 
-                    public{{(isTypeSealed ? " " : " virtual ")}}bool Equals({{IdToCSharpPascal[(Primary)node.Id.Node]}}? other)
+                    public{{(isTypeSealed ? " " : " virtual ")}}bool Equals({{IdToCSharpPascal[n]}}? other)
                     => {{string.Join(" && ", node.Params.Select(s => s.Expressions switch
                     {
                         [Postfix { Operator.Token: Phases.Tokenize.Token.Symbol { Value: "*" }, Node: Primary }, Primary prop] => $"StructuralEquals({IdToCSharpPascal[prop]}, other?.{IdToCSharpPascal[prop]})",
@@ -493,21 +499,21 @@ public class CSharpVisitor(string @namespace) : IVisitor
                 if (paramsCount is 0)
                     TreePrintVisitor.AppendLine($$"""
 
-                        public override void Visit({{Namespace}}.Parse.{{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}})
+                        public override void Visit({{Namespace}}.Parse.{{IdToCSharpPascal[n]}} {{IdToCSharpCamel[n]}})
                         {
-                            PrintTree(input.Span, {{IdToCSharpCamel[(Primary)node.Id.Node]}}, isTerminal: true);
+                            PrintTree(input.Span, {{IdToCSharpCamel[n]}}, isTerminal: true);
                         }
                     """);
                 else
                     TreePrintVisitor.AppendLine($$"""
 
-                        public override void Enter({{Namespace}}.Parse.{{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}})
+                        public override void Enter({{Namespace}}.Parse.{{IdToCSharpPascal[n]}} {{IdToCSharpCamel[n]}})
                         {
-                            PrintTree(input.Span, {{IdToCSharpCamel[(Primary)node.Id.Node]}}, isTerminal: false);
+                            PrintTree(input.Span, {{IdToCSharpCamel[n]}}, isTerminal: false);
                             _depth++;
                         }
 
-                        public override void Exit({{Namespace}}.Parse.{{IdToCSharpPascal[(Primary)node.Id.Node]}} {{IdToCSharpCamel[(Primary)node.Id.Node]}})
+                        public override void Exit({{Namespace}}.Parse.{{IdToCSharpPascal[n]}} {{IdToCSharpCamel[n]}})
                         {
                             _depth--;
                         }
