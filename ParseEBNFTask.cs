@@ -76,7 +76,7 @@ public sealed class ParseEBNFTask : Task
                     Directory.CreateDirectory($"{OutputFolder}/Tokenize");
                     Directory.CreateDirectory($"{OutputFolder}/Visitors");
                     File.WriteAllText($"{OutputFolder}/Parse/Parser.g.cs", generator.Parser.ToString());
-                    File.WriteAllText($"{OutputFolder}/Parse.IVisitor.g.cs", generator.IVisitor.ToString());
+                    File.WriteAllText($"{OutputFolder}/Parse/IVisitor.g.cs", generator.IVisitor.ToString());
                     File.WriteAllText($"{OutputFolder}/Parse/TreeNode.g.cs", generator.TreeNode.ToString());
                     File.WriteAllText($"{OutputFolder}/Tokenize/Token.g.cs", generator.Token.ToString());
                     File.WriteAllText($"{OutputFolder}/Tokenize/Tokenizer.g.cs", generator.Tokenizer.ToString());
