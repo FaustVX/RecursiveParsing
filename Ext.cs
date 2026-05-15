@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace RecursiveParsing;
 
 static class Ext
@@ -21,5 +23,10 @@ static class Ext
         => rom += 1;
         public static ReadOnlyMemory<T> operator +(ReadOnlyMemory<T> rom, Index offset)
         => rom[offset..];
+    }
+    extension(StringBuilder sb)
+    {
+        public StringBuilder AppendLineLinux(string text)
+        => sb.AppendFormat("{0}\n", text.Replace("\r\n", "\n"));
     }
 }

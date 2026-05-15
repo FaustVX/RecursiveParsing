@@ -1,7 +1,6 @@
 {
-    (c + d)(a ? "1" : "2", "b");
-    ----a;
-    +a*b+c;
-    a+b*c;
-    a^b^c!;
+    printf(34);
+    printf(--1);
+    printf(2*3+4);
+    printf(2+3*4);
 }

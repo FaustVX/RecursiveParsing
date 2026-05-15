@@ -13,7 +13,7 @@ partial struct Token
     public Token(Token.Symbol s)
     => Value = s;
 
-    public readonly record struct Int(int Value);
+    public readonly record struct Int(int? Value);
     public readonly record struct Id(string Value);
     public readonly record struct String(string Value)
     {
@@ -37,7 +37,7 @@ partial struct Token
         (Token.WhiteSpace, Token.WhiteSpace { Value: null }) => true,
         (Token.WhiteSpace { Value: var vl }, Token.WhiteSpace { Value: var vr }) => vl == vr,
         (Token.WhiteSpace, _) => false,
-        // (Token.Int, Token.Int { Value: null }) => true,
+        (Token.Int, Token.Int { Value: null }) => true,
         (Token.Int { Value: var vl }, Token.Int { Value: var vr }) => vl == vr,
         (Token.Int, _) => false,
         (Token.Id, Token.Id { Value: null }) => true,
@@ -65,6 +65,6 @@ partial struct Token
         Token.String { Value: string v } => v,
         Token.Symbol { Value: string v } => v,
         Token.EOL => "\\n",
-        Token.WhiteSpace or Token.EOF or null => "",
+        Token.WhiteSpace or Token.EOF or Token.Int or null => "",
     };
 }

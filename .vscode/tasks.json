@@ -63,5 +63,17 @@
                 "build lib"
             ]
         },
+        {
+            "label": "make",
+            "command": "wsl",
+            "type": "process",
+            "args": [
+                "--exec",
+                "make",
+                // "-B",
+                "run",
+            ],
+            "problemMatcher": "$msCompile",
+        },
     ]
 }

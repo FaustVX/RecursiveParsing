@@ -9,10 +9,6 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="lib\ebnf\EBNFParser.csproj" />
-  </ItemGroup>
-
   <Target Name="ParseEBNF">
     <ParseEBNFTask Namespace="RecursiveParsing" OutputFolder="out" EBNF_File="myLang.ebnf" />
   </Target>
