@@ -14,7 +14,7 @@ try
     // ast.Accept(new TreePrintVisitor(input.AsMemory()));
     var qbe = new QBEVisitor();
     ast.Accept(qbe);
-    System.IO.File.WriteAllBytes(@"obj/main.ssa", Encoding.ASCII.GetBytes(qbe.QBEFile.ToString()));
+    System.IO.File.WriteAllBytes(@"obj/main.ssa", Encoding.ASCII.GetBytes(qbe.QBEFile.ToString().Replace("\r\n", "\n")));
 }
 catch (EBNFException ex)
 {
