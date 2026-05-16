@@ -165,6 +165,8 @@ sealed partial class Parser
             }
             else if (Helper.TryConsume(tokenizer, new Token.Symbol("("), out t))
             {
+                if (Helper.TryConsume(tokenizer, new Token.Symbol(")")))
+                    return expr = new CallExpr(expr, [], start..tokenizer.CurrentSpan.End) { Precedence = ExpressionPrecedence.Postfix };
                 var a = Parse_Args(tokenizer);
                 Helper.Expect(tokenizer, new Token.Symbol(")"));
                 var end = tokenizer.CurrentSpan.End;
