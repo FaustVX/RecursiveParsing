@@ -17,6 +17,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
     public StringBuilder Token { get; } = new();
     public StringBuilder Tokenizer { get; } = new();
     public StringBuilder TreePrintVisitor { get; } = new();
+    public StringBuilder Ext { get; } = new();
     public string Namespace { get; } = @namespace;
     public FrozenDictionary<Primary, string> IdToCSharpPascal { get; private set; } = null!;
     public FrozenDictionary<Primary, string> IdToCSharpCamel { get; private set; } = null!;
@@ -323,6 +324,47 @@ public class CSharpVisitor(string @namespace) : IVisitor
             protected void PrintTree(ReadOnlySpan<char> input, TreeNode node, bool isTerminal)
         #pragma warning restore CS0628 // New protected member declared in sealed type
             => Console.WriteLine($"{IndentSpaces(_depth)}{node.GetType().Name} = [{node.Span}]{input[node.Span]}{(isTerminal ? "" : ":")}");
+        """);
+        Ext.AppendLine($$"""
+        using System.Text;
+
+        namespace {{Namespace}};
+
+        static partial class Ext
+        {
+            extension<T>(ReadOnlyMemory<T> rom)
+            where T : struct
+            {
+                public T? First
+                {
+                    get
+                    {
+                        if (rom.IsEmpty)
+                            return null;
+                        return rom.Span[0];
+                    }
+                }
+            }
+
+            extension<T>(ReadOnlyMemory<T>)
+            {
+                public static ReadOnlyMemory<T> operator ++(ReadOnlyMemory<T> rom)
+                => rom += 1;
+                public static ReadOnlyMemory<T> operator +(ReadOnlyMemory<T> rom, Index offset)
+                => rom[offset..];
+            }
+
+            extension(Index index)
+            {
+                public (int line, int column) GetPos(ReadOnlySpan<char> text)
+                {
+                    var before = text[..index];
+                    var nls = before.Count('\n');
+                    var offset = index.GetOffset(text.Length) - before.LastIndexOf('\n');
+                    return (nls + 1, offset);
+                }
+            }
+        }
         """);
     }
     void IVisitor.Enter(Node node)

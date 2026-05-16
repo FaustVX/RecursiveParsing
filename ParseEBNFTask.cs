@@ -82,6 +82,7 @@ public sealed class ParseEBNFTask : Task
                     File.WriteAllText($"{OutputFolder}/Tokenize/Token.g.cs", generator.Token.ToString());
                     File.WriteAllText($"{OutputFolder}/Tokenize/Tokenizer.g.cs", generator.Tokenizer.ToString());
                     File.WriteAllText($"{OutputFolder}/Visitors/TreePrintVisitor.g.cs", generator.TreePrintVisitor.ToString());
+                    File.WriteAllText($"{OutputFolder}/Ext.g.cs", generator.Ext.ToString());
                 }
                 return true;
             }
