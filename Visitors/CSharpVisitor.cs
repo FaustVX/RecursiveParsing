@@ -241,6 +241,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
             public abstract Range Range { get; }
             public abstract string ErrorCode { get; }
             public abstract string SubCategory { get; }
+            public override abstract string Message { get; }
         }
 
         [Serializable]
