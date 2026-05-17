@@ -13,6 +13,30 @@ try
 {
     var ast = new Parser(input).ParseFile();
     // ast.Accept(new TreePrintVisitor(input.AsMemory()));
+    ast.Accept(new CheckTypeVisitor(new()
+    {
+        [(new Token.Id("printf"), [ExpressionType.Int])] = ExpressionType.None,
+        [(new Token.Id("printf"), [ExpressionType.String])] = ExpressionType.None,
+        [(new Token.Symbol("+"), [ExpressionType.Int])] = ExpressionType.Int,
+        [(new Token.Symbol("-"), [ExpressionType.Int])] = ExpressionType.Int,
+        // [(new Token.Symbol("!"), [ExpressionType.Int])] = ExpressionType.Int,
+        [(new Token.Symbol("+"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Int,
+        [(new Token.Symbol("-"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Int,
+        [(new Token.Symbol("*"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Int,
+        [(new Token.Symbol("/"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Int,
+        // [(new Token.Symbol("^"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Int,
+        // [(new Token.Symbol("=="), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol("!="), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol("<="), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol("<"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol(">="), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol(">"), [ExpressionType.Int, ExpressionType.Int])] = ExpressionType.Bool,
+        // [(new Token.Symbol("=="), [ExpressionType.String, ExpressionType.String])] = ExpressionType.Bool,
+        // [(new Token.Symbol("!="), [ExpressionType.String, ExpressionType.String])] = ExpressionType.Bool,
+        // [(new Token.Symbol("=="), [ExpressionType.Bool, ExpressionType.Bool])] = ExpressionType.Bool,
+        // [(new Token.Symbol("<="), [ExpressionType.Bool, ExpressionType.Bool])] = ExpressionType.Bool,
+        // [(new Token.Symbol("+"), [ExpressionType.String, ExpressionType.String])] = ExpressionType.String,
+    }));
     var qbe = new QBEVisitor();
     ast.Accept(qbe);
     System.IO.File.WriteAllBytes(@$"obj/{name}.ssa", Encoding.ASCII.GetBytes(qbe.QBEFile.ToString().Replace("\r\n", "\n")));

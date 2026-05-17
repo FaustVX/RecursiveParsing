@@ -3,6 +3,16 @@ using RecursiveParsing.Tokenize;
 
 namespace RecursiveParsing.Parse;
 
+public enum ExpressionType
+{
+    None = -1,
+    Unknown = 0,
+    Id,
+    String,
+    Int,
+    Bool,
+}
+
 public enum ExpressionPrecedence
 {
     Expression = 1, // not 0 to avoid implicit conversion from 0
@@ -20,6 +30,7 @@ public enum ExpressionPrecedence
 partial record class Expression
 {
     public required ExpressionPrecedence Precedence { get; init; }
+    public ExpressionType Type { get; set; }
 }
 
 sealed partial record class Primary
