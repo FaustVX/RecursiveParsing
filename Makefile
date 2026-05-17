@@ -6,8 +6,11 @@ bin/input: obj/input.s
 obj/input.s: obj/input.ssa
 	qbe -o $@ $^
 
-obj/input.ssa: input.txt out/Ext.g.cs $(shell find . -not \( -path "./lib/*" -o -path "./obj/*" \) -name "*.cs") *.*proj
-	~/dotnet/dotnet run -- $<
+obj/input.ssa: bin/Debug/net11.0/RecursiveParsing.dll input.txt
+	~/dotnet/dotnet $^
+
+bin/Debug/net11.0/RecursiveParsing.dll: *.*proj out/Ext.g.cs $(shell find . -not \( -path "./lib/*" -o -path "./obj/*" \) -name "*.cs")
+	~/dotnet/dotnet build $<
 
 out/Ext.g.cs: myLang.ebnf lib/ebnf/bin/Debug/net11.0/EBNFParser.dll
 	~/dotnet/dotnet build RecursiveParsing.csproj -t:ParseEBNF
