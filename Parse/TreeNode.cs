@@ -1,4 +1,5 @@
-using System.Diagnostics;
+using System.Collections;
+using System.Collections.Immutable;
 using RecursiveParsing.Tokenize;
 
 namespace RecursiveParsing.Parse;
@@ -7,10 +8,74 @@ public enum ExpressionType
 {
     None = -1,
     Unknown = 0,
-    Id,
     String,
     Int,
     Bool,
+    Function,
+}
+
+public readonly record struct FunctionSignature(string Name, ExpressionTypeUnion Return, ImmutableArray<ExpressionTypeUnion> Args)
+{
+    public override string ToString()
+    => $"{Name}({string.Join(", ", Args)}): {Return}";
+
+    public bool IsCompatibleWith(ImmutableArray<Expression> args)
+    => args.Length == Args.Length && Args.Zip(args.Select(a => a.Type)).All(a => a.First == a.Second);
+
+    public static ImmutableArray<FunctionSignature> CommonSignature(ImmutableArray<FunctionSignature> lhs, ImmutableArray<FunctionSignature> rhs)
+    {
+        return [..Impl(lhs, rhs)];
+
+        static IEnumerable<FunctionSignature> Impl(ImmutableArray<FunctionSignature> lhs, ImmutableArray<FunctionSignature> rhs)
+        {
+            foreach (var sig in lhs)
+                if (rhs.Contains(sig))
+                    yield return sig;
+        }
+    }
+
+    public sealed class Equatable : IEqualityComparer
+    {
+        private Equatable() {}
+        public static Equatable Instance { get; } = new();
+        public new bool Equals(object? x, object? y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetHashCode(object obj)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+public readonly union ExpressionTypeUnion(ExpressionType, ImmutableArray<FunctionSignature>)
+{
+    public static bool operator !=(ExpressionTypeUnion lhs, ExpressionTypeUnion rhs)
+    => !(lhs == rhs);
+    public static bool operator ==(ExpressionTypeUnion lhs, ExpressionTypeUnion rhs)
+    => lhs.Equals(rhs);
+    public override bool Equals(object? obj)
+    => obj is ExpressionTypeUnion other && Equals(other);
+    public bool Equals(ExpressionTypeUnion other)
+    => (this, other) switch
+    {
+        (ExpressionType l, ExpressionType r) => l == r,
+        (ImmutableArray<FunctionSignature> l, ImmutableArray<FunctionSignature> r) => ((IStructuralEquatable)l).Equals(r, FunctionSignature.Equatable.Instance),
+        (null, null) => true,
+        _ => false,
+    };
+    public override int GetHashCode()
+    => Value?.GetHashCode() ?? 0;
+
+    public override string ToString()
+    => this switch
+    {
+        ExpressionType t => t.ToString(),
+        ImmutableArray<FunctionSignature> sigs => string.Join(" or ", sigs),
+        null => "",
+    };
 }
 
 public enum ExpressionPrecedence
@@ -30,19 +95,13 @@ public enum ExpressionPrecedence
 partial record class Expression
 {
     public required ExpressionPrecedence Precedence { get; init; }
-    public ExpressionType Type { get; set; }
+    public ExpressionTypeUnion Type { get; set; }
 }
 
 sealed partial record class Primary
 {
     public required TokenSpan TokenSpan { get; init; }
 
-    public string Name => TokenSpan.Token switch
-    {
-        Token.Id { Value: string v} => v,
-        Token.String { Value: string v} => v,
-        _ => throw new UnreachableException(),
-    };
     public override void Accept(IVisitor visitor)
     => visitor.Visit(this);
 

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 using RecursiveParsing.Parse;
@@ -179,21 +180,14 @@ public sealed class QBEVisitor : Visitor
     {
         switch (callExpr)
         {
-            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.String }] }:
-                Debug.Assert(_varCount >= 1);
-                QBEFile.AppendLine($$"""    call $_printf_str(l %_l{{_varCount - 1}})""");
+            case { Type: ExpressionType.None, Args: [{Type: ExpressionType.String or ImmutableArray<FunctionSignature> { Length: 1 }}] }:
+                QBEFile.AppendLine($$"""    call $_call_n_l(l %_l{{_varCount - 2}}, l %_l{{_varCount - 1}})""");
                 _varCount -= 2;
-            break;
-            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.Bool }] }:
-                Debug.Assert(_varCount >= 1);
-                QBEFile.AppendLine($$"""    call $_printf_bool(w %_w{{_varCount - 1}})""");
+                break;
+            case { Type: ExpressionType.None, Args: [{Type: ExpressionType.Int or ExpressionType.Bool}] }:
+                QBEFile.AppendLine($$"""    call $_call_n_w(l %_l{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
                 _varCount -= 2;
-            break;
-            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.Int }] }:
-                Debug.Assert(_varCount >= 1);
-                QBEFile.AppendLine($$"""    call $_printf_int(w %_w{{_varCount - 1}})""");
-                _varCount -= 2;
-            break;
+                break;
         }
     }
 
@@ -226,7 +220,7 @@ public sealed class QBEVisitor : Visitor
                 => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csgtw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
             (ExpressionType.None or ExpressionType.Unknown, _, _)
             or (_, _, ExpressionType.None or ExpressionType.Unknown)
-            or (_, not Token.Symbol, _)
+            or (_, not Token.Symbol, _) or _
                 => throw new UnreachableException(),
         };
         _varCount -= 1;
@@ -254,7 +248,7 @@ public sealed class QBEVisitor : Visitor
             case (ExpressionType.Int or ExpressionType.Bool, Token.Symbol { Value: "?" }):
                 QBEFile.AppendLine($$"""    %_w{{_varCount - 3}} =w call $_ternary_w(w %_w{{_varCount - 3}}, w %_w{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
                 break;
-            case (ExpressionType.String or ExpressionType.Function, Token.Symbol { Value: "?" }):
+            case (ExpressionType.String or ImmutableArray<FunctionSignature> { Length: 1 } or ImmutableArray<FunctionSignature> { Length: 1 }, Token.Symbol { Value: "?" }):
                 QBEFile.AppendLine($$"""    %_l{{_varCount - 3}} =l call $_ternary_l(w %_w{{_varCount - 3}}, l %_l{{_varCount - 2}}, l %_l{{_varCount - 1}})""");
                 break;
         }
@@ -270,8 +264,8 @@ public sealed class QBEVisitor : Visitor
                 QBEData.AppendLine($$"""data $str_{{_strCount++}} = { b "{{s}}", b 0 }""");
                 _varCount += 1;
                 break;
-            case Token.Id { Value: string i } when primary.Type is ExpressionType.Function:
-                QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy ${{i}}""");
+            case Token.Id when primary.Type is ImmutableArray<FunctionSignature> { Length: 1 } sig:
+                QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy ${{sig[0].Name}}""");
                 _varCount += 1;
                 break;
             case Token.Int { Value: int i }:

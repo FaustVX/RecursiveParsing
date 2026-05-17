@@ -24,11 +24,11 @@ file sealed class InvalidOperationException(TokenSpan span) : CheckTypeVisitorEx
     public override string Message => $"Invalid operation given types";
 }
 
-file sealed class InvalidOperandTypeException(TokenSpan span, Expression expression, ExpressionType expected) : CheckTypeVisitorException
+file sealed class InvalidOperandTypeException(TokenSpan span, Expression expression, ExpressionTypeUnion expected) : CheckTypeVisitorException
 {
     public TokenSpan Span { get; } = span;
     public Expression Expression { get; } = expression;
-    public ExpressionType Expected { get; } = expected;
+    public ExpressionTypeUnion Expected { get; } = expected;
 
     public override Range Range => Span.Span;
 
@@ -39,10 +39,10 @@ file sealed class InvalidOperandTypeException(TokenSpan span, Expression express
     public override string Message => $"Invalid operand type, should be {Expected}, but got {Expression.Type}";
 }
 
-file sealed class InvalidExpressionType(Expression expression, ExpressionType expected) : CheckTypeVisitorException
+file sealed class InvalidExpressionType(Expression expression, ExpressionTypeUnion expected) : CheckTypeVisitorException
 {
     public Expression Expression { get; } = expression;
-    public ExpressionType Expected { get; } = expected;
+    public ExpressionTypeUnion Expected { get; } = expected;
 
     public override Range Range => Expression.Span;
 
@@ -93,10 +93,10 @@ file sealed class InvalidArgsCountException(Call call, ImmutableHashSet<int> cou
     public override string Message => $"Invalid args count, should be any of [{string.Join(", ", Counts)}], but got {Call.ArgsLength}";
 }
 
-file sealed class InvalidArgumentTypeException(Call call, ImmutableHashSet<ImmutableArray<ExpressionType>> expected) : CheckTypeVisitorException
+file sealed class InvalidArgumentTypeException(Call call, ImmutableHashSet<ImmutableArray<ExpressionTypeUnion>> expected) : CheckTypeVisitorException
 {
     public Call Call { get; } = call;
-    public ImmutableHashSet<ImmutableArray<ExpressionType>> Expected { get; } = expected;
+    public ImmutableHashSet<ImmutableArray<ExpressionTypeUnion>> Expected { get; } = expected;
 
     public override Range Range => Call.Span;
 
@@ -135,7 +135,7 @@ readonly union Call(CallExpr, BinaryExpr, PrefixExpr, PostfixExpr)
         null => throw new UnreachableException(),
     };
 
-    public readonly ExpressionType Type
+    public readonly ExpressionTypeUnion Type
     {
         get => ((Expression)Value!).Type;
         set => ((Expression)Value!).Type = value;
@@ -161,38 +161,47 @@ readonly union Call(CallExpr, BinaryExpr, PrefixExpr, PostfixExpr)
     }
 }
 
-sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>), ExpressionType> functions) : Visitor
+sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUnion>), (ExpressionTypeUnion type, string funcName)> functions) : Visitor
 {
-    private readonly FrozenDictionary<(Token, ImmutableArray<ExpressionType>), ExpressionType> _functionsSignature = [with(new FunctionEquality()), ..functions];
+    private readonly FrozenDictionary<(Token, ImmutableArray<ExpressionTypeUnion>), (ExpressionTypeUnion type, string funcName)> _functionsSignature = [with(new FunctionEquality()), ..functions];
     private readonly FrozenSet<Token> _functionsName = [..functions.Select(f => f.Key.Item1)];
     private readonly FrozenSet<(Token, int)> _functionsArgsCount = [..functions.Select(f => (f.Key.Item1, f.Key.Item2.Length))];
 
-    sealed class FunctionEquality : IEqualityComparer<(Token, ImmutableArray<ExpressionType>)>
+    sealed class FunctionEquality : IEqualityComparer<(Token, ImmutableArray<ExpressionTypeUnion>)>
     {
-        public bool Equals((Token, ImmutableArray<ExpressionType>) x, (Token, ImmutableArray<ExpressionType>) y)
+        public bool Equals((Token, ImmutableArray<ExpressionTypeUnion>) x, (Token, ImmutableArray<ExpressionTypeUnion>) y)
         => x.Item1 == y.Item1 && x.Item2.SequenceEqual(y.Item2);
 
-        public int GetHashCode([DisallowNull] (Token, ImmutableArray<ExpressionType>) obj)
+        public int GetHashCode([DisallowNull] (Token, ImmutableArray<ExpressionTypeUnion>) obj)
         => HashCode.Combine(obj.Item1, ((IStructuralEquatable)obj.Item2).GetHashCode(new ImmutableArrayEquality()));
 
         sealed class ImmutableArrayEquality : System.Collections.IEqualityComparer
         {
             public new bool Equals(object? x, object? y)
-            => (x, y) is (ExpressionType l, ExpressionType r) ? l == r : throw new Exception();
+            => (x, y) is (ExpressionTypeUnion l, ExpressionTypeUnion r) ? l == r : throw new Exception();
 
             public int GetHashCode(object obj)
-            => obj is ExpressionType t ? t.GetHashCode() : throw new Exception();
+            => obj is ExpressionTypeUnion t ? t.GetHashCode() : throw new Exception();
         }
     }
 
     public override void Visit(Primary primary)
-    => primary.Type = primary.TokenSpan.Token switch
     {
-        Token.String => ExpressionType.String,
-        Token.Int => ExpressionType.Int,
-        Token.Id id => _functionsName.Contains(id) ? ExpressionType.Function : ExpressionType.Unknown,
-        _ => throw new UnreachableException(),
-    };
+        primary.Type = primary.TokenSpan.Token switch
+        {
+            Token.String => ExpressionType.String,
+            Token.Int => ExpressionType.Int,
+            Token.Id id => _functionsName.Contains(id) ? GetFunctionCandidates(id).ToImmutableArray() : ExpressionType.Unknown,
+            _ => throw new UnreachableException(),
+        };
+;
+        IEnumerable<FunctionSignature> GetFunctionCandidates(Token.Id id)
+        {
+            foreach (var ((name, args), (type, funcName)) in _functionsSignature)
+                if (name == id)
+                    yield return new(funcName, type, args);
+        }
+    }
 
     public override void Exit(ExpressionStatement expressionStatement)
     {
@@ -209,19 +218,15 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>)
             if (!_functionsArgsCount.Contains((id, call.ArgsLength)))
                 throw new InvalidArgsCountException(call, [.. _functionsArgsCount.Where(f => f.Item1 == id).Select(f => f.Item2)]);
         }
-        else
-            throw new InvalidCallException(call);
     }
 
     private void ExitCall(Call call)
     {
         if (call.TryGetId(out var id))
             if (_functionsSignature.TryGetValue((id, [.. call.Args.Select(a => a.Type)]), out var type))
-                call.Type = type;
+                call.Type = type.type;
             else
                 throw new InvalidArgumentTypeException(call, [.._functionsSignature.Where(f => f.Key.Item1 == id && f.Key.Item2.Length == call.ArgsLength).Select(f => f.Key.Item2)]);
-        else
-            throw new UnreachableException();
     }
 
     public override void Enter(PrefixExpr prefixExpr)
@@ -247,9 +252,33 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>)
 
     public override void Exit(CallExpr callExpr)
     {
-        if (callExpr.Expression.Type is not ExpressionType.Function)
+        if (callExpr.Expression.Type is not ImmutableArray<FunctionSignature> { Length: > 0 } sig )
             throw new InvalidExpressionType(callExpr.Expression, ExpressionType.Function);
+        callExpr.Expression.Type = sig = [..sig.Where(s => s.IsCompatibleWith(callExpr.Args))];
         ExitCall(callExpr);
+        if (callExpr.Type is not null)
+            return;
+        if (sig is [var func])
+            callExpr.Type = func.Return;
+        else
+            throw new InvalidCallException(callExpr);
+
+        BackPropagateType(callExpr.Expression);
+
+        static void BackPropagateType(Expression expr)
+        {
+            switch (expr)
+            {
+                case TernaryExpr ternary:
+                    ternary.Center.Type = ternary.Right.Type = expr.Type;
+                    BackPropagateType(ternary.Center);
+                    BackPropagateType(ternary.Right);
+                    break;
+                case Primary primary:
+                    primary.Type = expr.Type;
+                    break;
+            }
+        }
     }
 
     public override void Exit(TernaryExpr ternaryExpr)
@@ -259,10 +288,13 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>)
             case (Token.Symbol { Value: "?" }, Token.Symbol { Value: ":" }):
                 if (ternaryExpr.Left.Type is not ExpressionType.Bool)
                     throw new InvalidExpressionType(ternaryExpr.Left, ExpressionType.Bool);
-                if (ternaryExpr.Center.Type != ternaryExpr.Right.Type)
+                if (ternaryExpr.Center.Type is ImmutableArray<FunctionSignature> { Length: > 0 } lhs && ternaryExpr.Right.Type is ImmutableArray<FunctionSignature> { Length: > 0 } rhs && FunctionSignature.CommonSignature(lhs, rhs) is { Length: > 0 } commons)
+                    ternaryExpr.Type = commons;
+                else if (ternaryExpr.Center.Type == ternaryExpr.Right.Type)
+                    ternaryExpr.Type = ternaryExpr.Center.Type;
+                else
                     throw new InvalidExpressionType(ternaryExpr.Right, ternaryExpr.Center.Type);
-                ternaryExpr.Type = ternaryExpr.Center.Type;
-            break;
+                break;
         }
     }
 }
