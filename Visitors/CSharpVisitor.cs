@@ -236,7 +236,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
         namespace {{Namespace}}.Tokenize;
 
         [Serializable]
-        public abstract class EBNFException : Exception
+        public abstract class EBNFException() : Exception
         {
             public abstract Range Range { get; }
             public abstract string ErrorCode { get; }
