@@ -98,6 +98,11 @@ partial record class Expression
     public ExpressionTypeUnion Type { get; set; }
 }
 
+partial record class BinaryExpr
+{
+    public ImmutableArray<FunctionSignature> Signatures { get; set; } = [];
+}
+
 sealed partial record class Primary
 {
     public required TokenSpan TokenSpan { get; init; }

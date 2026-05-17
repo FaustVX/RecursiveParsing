@@ -19,7 +19,7 @@ public partial class TreeTypePrintVisitor(ReadOnlyMemory<char> input) : Visitor
     }
     protected void PrintTree(ReadOnlySpan<char> input, Expression expression, bool isTerminal)
 #pragma warning restore CS0628 // New protected member declared in sealed type
-    => Console.WriteLine($"{IndentSpaces(_depth)}{expression.GetType().Name} = [{expression.Type}]{input[expression.Span]}{(isTerminal ? ";" : ":")}");
+    => Console.WriteLine($"{IndentSpaces(_depth)}{expression.GetType().Name} = [{(expression is BinaryExpr b ? string.Join(" or ", b.Signatures) : expression.Type)}]{input[expression.Span]}{(isTerminal ? ";" : ":")}");
 
     public override void Visit(Primary primary)
     {

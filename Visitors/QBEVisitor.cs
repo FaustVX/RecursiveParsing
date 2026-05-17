@@ -193,38 +193,24 @@ public sealed class QBEVisitor : Visitor
 
     public override void Exit(BinaryExpr binaryExpr)
     {
+        Console.WriteLine(string.Join(" or ", binaryExpr.Signatures));
         Debug.Assert(_varCount >= 2);
-        _ = (binaryExpr.Left.Type, binaryExpr.Operator.Token, binaryExpr.Right.Type) switch
+        _ = binaryExpr.Signatures switch
         {
-            (ExpressionType.Int, Token.Symbol { Value: "+" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w add %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "-" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w sub %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "*" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w mul %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "/" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w div %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "==" }, ExpressionType.Int)
-            or (ExpressionType.Bool, Token.Symbol { Value: "==" }, ExpressionType.Bool)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w ceqw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "!=" }, ExpressionType.Int)
-            or (ExpressionType.Bool, Token.Symbol { Value: "!=" }, ExpressionType.Bool)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w cnew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "<=" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w cslew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: "<" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csltw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: ">=" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csgew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.Int, Token.Symbol { Value: ">" }, ExpressionType.Int)
-                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csgtw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
-            (ExpressionType.None or ExpressionType.Unknown, _, _)
-            or (_, _, ExpressionType.None or ExpressionType.Unknown)
-            or (_, not Token.Symbol, _) or _
-                => throw new UnreachableException(),
+            { Length: not 1 } or [{ Name.Length: 0 } or { Args.Length: not 2 }] => throw new UnreachableException(),
+            [{ Name: ['_', ..], Return: var ret, Args: [var lhs, var rhs] } sig] => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} call ${{sig.Name}}({{TypeToQBE(lhs)}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, {{TypeToQBE(rhs)}} %_{{TypeToQBE(rhs)}}{{_varCount - 1}})"""),
+            [{ Return: var ret, Args: [var lhs, var rhs] } sig] => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} {{sig.Name}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, %_{{TypeToQBE(rhs)}}{{_varCount - 1}}"""),
         };
         _varCount -= 1;
     }
+
+    static char TypeToQBE(ExpressionTypeUnion type)
+    => type switch
+    {
+        ImmutableArray<FunctionSignature> or ExpressionType.String => 'l',
+        ExpressionType.Bool or ExpressionType.Int => 'w',
+        _ => throw new UnreachableException(),
+    };
 
     public override void Exit(PrefixExpr prefixExpr)
     {

@@ -194,7 +194,7 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
             Token.Id id => _functionsName.Contains(id) ? GetFunctionCandidates(id).ToImmutableArray() : ExpressionType.Unknown,
             _ => throw new UnreachableException(),
         };
-;
+
         IEnumerable<FunctionSignature> GetFunctionCandidates(Token.Id id)
         {
             foreach (var ((name, args), (type, funcName)) in _functionsSignature)
@@ -242,10 +242,32 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
     => ExitCall(postfixExpr);
 
     public override void Enter(BinaryExpr binaryExpr)
-    => EnterCall(binaryExpr);
+    {
+        EnterCall(binaryExpr);
+        if (binaryExpr.Operator.Token is Token.Symbol id)
+            binaryExpr.Signatures = _functionsName.Contains(id) ? [..GetFunctionCandidates(id, 2)] : throw new UnreachableException();
+
+        IEnumerable<FunctionSignature> GetFunctionCandidates(Token.Symbol id, int argsCount)
+        {
+            foreach (var ((name, args), (type, funcName)) in _functionsSignature)
+                if (argsCount == args.Length && name == id)
+                    yield return new(funcName, type, args);
+        }
+    }
 
     public override void Exit(BinaryExpr binaryExpr)
-    => ExitCall(binaryExpr);
+    {
+        if (binaryExpr.Signatures is not ImmutableArray<FunctionSignature> { Length: > 0 } sig )
+            throw new InvalidExpressionType(binaryExpr, ExpressionType.Function);
+        binaryExpr.Signatures = [..sig.Where(s => s.IsCompatibleWith([binaryExpr.Left, binaryExpr.Right]))];
+        // ExitCall(binaryExpr);
+        if (binaryExpr.Type is not null)
+            return;
+        if (binaryExpr.Signatures is [var func])
+            binaryExpr.Type = func.Return;
+        else
+            throw new InvalidArgumentTypeException(binaryExpr, [..sig.Select(s => s.Args)]);
+    }
 
     public override void Enter(CallExpr callExpr)
     => EnterCall(callExpr);
@@ -254,14 +276,15 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
     {
         if (callExpr.Expression.Type is not ImmutableArray<FunctionSignature> { Length: > 0 } sig )
             throw new InvalidExpressionType(callExpr.Expression, ExpressionType.Function);
-        callExpr.Expression.Type = sig = [..sig.Where(s => s.IsCompatibleWith(callExpr.Args))];
+        sig = [..sig.Where(s => s.Args.Length == callExpr.Args.Length)];
+        callExpr.Expression.Type = sig.Where(s => s.IsCompatibleWith(callExpr.Args)).ToImmutableArray();
         ExitCall(callExpr);
         if (callExpr.Type is not null)
             return;
-        if (sig is [var func])
+        if (callExpr.Expression.Type is ImmutableArray<FunctionSignature> and [var func])
             callExpr.Type = func.Return;
         else
-            throw new InvalidCallException(callExpr);
+            throw new InvalidArgumentTypeException(callExpr, [..sig.Select(s => s.Args)]);
 
         BackPropagateType(callExpr.Expression);
 
