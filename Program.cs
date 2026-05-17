@@ -17,6 +17,7 @@ try
     {
         [(new Token.Id("printf"), [ExpressionType.Int])] = ExpressionType.None,
         [(new Token.Id("printf"), [ExpressionType.String])] = ExpressionType.None,
+        [(new Token.Id("printf"), [ExpressionType.Bool])] = ExpressionType.None,
         [(new Token.Symbol("+"), [ExpressionType.Int])] = ExpressionType.Int,
         [(new Token.Symbol("-"), [ExpressionType.Int])] = ExpressionType.Int,
         // [(new Token.Symbol("!"), [ExpressionType.Int])] = ExpressionType.Int,

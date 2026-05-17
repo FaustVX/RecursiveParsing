@@ -190,7 +190,7 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>)
     {
         Token.String => ExpressionType.String,
         Token.Int => ExpressionType.Int,
-        Token.Id => ExpressionType.Id,
+        Token.Id id => _functionsName.Contains(id) ? ExpressionType.Function : ExpressionType.Unknown,
         _ => throw new UnreachableException(),
     };
 
@@ -246,5 +246,23 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionType>)
     => EnterCall(callExpr);
 
     public override void Exit(CallExpr callExpr)
-    => ExitCall(callExpr);
+    {
+        if (callExpr.Expression.Type is not ExpressionType.Function)
+            throw new InvalidExpressionType(callExpr.Expression, ExpressionType.Function);
+        ExitCall(callExpr);
+    }
+
+    public override void Exit(TernaryExpr ternaryExpr)
+    {
+        switch (ternaryExpr.OpLeft.Token, ternaryExpr.OpRight.Token)
+        {
+            case (Token.Symbol { Value: "?" }, Token.Symbol { Value: ":" }):
+                if (ternaryExpr.Left.Type is not ExpressionType.Bool)
+                    throw new InvalidExpressionType(ternaryExpr.Left, ExpressionType.Bool);
+                if (ternaryExpr.Center.Type != ternaryExpr.Right.Type)
+                    throw new InvalidExpressionType(ternaryExpr.Right, ternaryExpr.Center.Type);
+                ternaryExpr.Type = ternaryExpr.Center.Type;
+            break;
+        }
+    }
 }

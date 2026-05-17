@@ -18,12 +18,150 @@ public sealed class QBEVisitor : Visitor
     public override void Enter(Parse.File file)
     {
         Debug.Assert(_varCount == 0);
+        // https://stackoverflow.com/a/22114373/5830999 bool for `printf` format
         QBEFile.AppendLine($$"""
+        # static int bool_arginfo(const struct printf_info *info, size_t n, int *argtypes, int *size)
+        # {
+        #     if (n) {
+        #         argtypes[0] = PA_INT;
+        #         *size = sizeof(bool);
+        #     }
+        #     return 1;
+        # }
+        function w $__bool_arginfo(l %info, l %n, l %argstypes, l %size){
+        @start
+            jnz %n, @true, @false
+        @true
+            %pa_int =w copy 1
+            storew %pa_int, %argstypes
+            storew %pa_int, %size
+        @false
+            ret 1
+        }
+
+        # static int bool_printf(FILE *stream, const struct printf_info *info, const void *const *args)
+        # {
+        #     bool b =  *(const bool*)(args[0]);
+        #     int r = fputs(b ? "true" : "false", stream);
+        #     return r == EOF ? -1 : (b ? 4 : 5);
+        # }
+        function w $__bool_printf(l %stream, l %info, l %args){
+        @start
+            %args =l loadl %args
+            %b =w loaduw %args
+            %value =l call $_ternary_l(w %b, l $true, l $false)
+            %r =w call $fputs(l %value, l %stream)
+            %len =w call $strlen(l %value)
+            %_1 =w copy -1
+            %b =w ceqw %r, %_1
+            %r =w call $_ternary_w(w %b, w -1, w %len)
+            ret %r
+        }
+
+        # static int setup_bool_specifier()
+        # {
+        #     int r = register_printf_specifier('B', bool_printf, bool_arginfo);
+        #     return r;
+        # }
+        function $__setup_bool_specifier() {
+        @start
+            %b =w copy 98
+            %printf =l copy $__bool_printf
+            %arginfo =l copy $__bool_arginfo
+            %_ =w call $register_printf_specifier(w %b, l %printf, l %arginfo)
+            jnz %_, @true, @false
+        @false
+            ret
+        @true
+            hlt
+        }
+
+        # char* concat(const char *s1, const char *s2)
+        # {
+        #     char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+        #     // in real code you would check for errors in malloc here
+        #     strcpy(result, s1);
+        #     strcat(result, s2);
+        #     return result;
+        # }
+        function l $_strconcat(l %lhs, l %rhs) {
+        @start
+            %len =l call $strlen(l %lhs)
+            %len1 =l call $strlen(l %rhs)
+            %len =l add %len, %len1
+            %len1 =l copy 1
+            %len =l add %len, %len1
+            %m =l call $malloc(l %len)
+            %_ =l call $strcpy(l %m, l %lhs)
+            %_ =l call $strcat(l %m, l %rhs)
+            ret %m
+        }
+
+        function w $_strcmp(l %lhs, l %rhs) {
+        @start
+            %cmp =w call $strcmp(l %lhs, l %rhs)
+            %val =w copy 0
+            %cmp =w ceqw %cmp, %val
+            ret %cmp
+        }
+
+        function w $_ternary_w(w %test, w %true, w %false) {
+        @start
+            jnz %test, @true, @false
+        @true
+            ret %true
+        @false
+            ret %false
+        }
+
+        function l $_ternary_l(w %test, l %true, l %false) {
+        @start
+            jnz %test, @true, @false
+        @true
+            ret %true
+        @false
+            ret %false
+        }
+
+        function $_printf_int(w %int) {
+        @start
+            call $printf(l $int, ..., w %int)
+            ret
+        }
+
+        function $_printf_str(l %str) {
+        @start
+            call $printf(l $str, ..., l %str)
+            ret
+        }
+
+        function $_printf_bool(w %bool) {
+        @start
+            call $printf(l $bool, ..., w %bool)
+            ret
+        }
+
+        function $_call_n_w(l %fun, w %arg1) {
+        @start
+            call %fun(w %arg1)
+            ret
+        }
+
+        function $_call_n_l(l %fun, l %arg1) {
+        @start
+            call %fun(l %arg1)
+            ret
+        }
+        """).AppendLine().AppendLine($$"""
         export function w $main() {
         @start
+            call $__setup_bool_specifier()
         """);
         QBEData.AppendLine("""data $int = { b "%d\n", b 0 }""")
-        .AppendLine("""data $str = { b "%s\n", b 0 }""");
+        .AppendLine("""data $str = { b "%s\n", b 0 }""")
+        .AppendLine("""data $bool = { b "%b\n", b 0 }""")
+        .AppendLine("""data $true = { b "true", b 0 }""")
+        .AppendLine("""data $false = { b "false", b 0 }""");
     }
 
     public override void Exit(Parse.File file)
@@ -41,15 +179,20 @@ public sealed class QBEVisitor : Visitor
     {
         switch (callExpr)
         {
-            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [Primary { TokenSpan.Token: Token.String }] }:
+            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.String }] }:
                 Debug.Assert(_varCount >= 1);
-                QBEFile.AppendLine($$"""    call $printf(l $str, ..., l %_l{{_varCount - 1}})""");
-                _varCount -= 1;
+                QBEFile.AppendLine($$"""    call $_printf_str(l %_l{{_varCount - 1}})""");
+                _varCount -= 2;
             break;
-            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args.Length: 1 }:
+            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.Bool }] }:
                 Debug.Assert(_varCount >= 1);
-                QBEFile.AppendLine($$"""    call $printf(l $int, ..., w %_w{{_varCount - 1}})""");
-                _varCount -= 1;
+                QBEFile.AppendLine($$"""    call $_printf_bool(w %_w{{_varCount - 1}})""");
+                _varCount -= 2;
+            break;
+            case { Expression: Primary { TokenSpan.Token: Token.Id { Value: "printf" } }, Args: [{ Type: ExpressionType.Int }] }:
+                Debug.Assert(_varCount >= 1);
+                QBEFile.AppendLine($$"""    call $_printf_int(w %_w{{_varCount - 1}})""");
+                _varCount -= 2;
             break;
         }
     }
@@ -57,22 +200,35 @@ public sealed class QBEVisitor : Visitor
     public override void Exit(BinaryExpr binaryExpr)
     {
         Debug.Assert(_varCount >= 2);
-        switch (binaryExpr.Operator.Token)
+        _ = (binaryExpr.Left.Type, binaryExpr.Operator.Token, binaryExpr.Right.Type) switch
         {
-            case Token.Symbol { Value: "+" }:
-                QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w add %_w{{_varCount - 2}}, %_w{{_varCount - 1}}""");
-                break;
-            case Token.Symbol { Value: "-" }:
-                QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w sub %_w{{_varCount - 2}}, %_w{{_varCount - 1}}""");
-                break;
-            case Token.Symbol { Value: "*" }:
-                QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w mul %_w{{_varCount - 2}}, %_w{{_varCount - 1}}""");
-                break;
-            case Token.Symbol { Value: "/" }:
-                QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w div %_w{{_varCount - 2}}, %_w{{_varCount - 1}}""");
-                break;
-            default: throw new UnreachableException();
-        }
+            (ExpressionType.Int, Token.Symbol { Value: "+" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w add %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "-" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w sub %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "*" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w mul %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "/" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w div %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "==" }, ExpressionType.Int)
+            or (ExpressionType.Bool, Token.Symbol { Value: "==" }, ExpressionType.Bool)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w ceqw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "!=" }, ExpressionType.Int)
+            or (ExpressionType.Bool, Token.Symbol { Value: "!=" }, ExpressionType.Bool)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w cnew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "<=" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w cslew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: "<" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csltw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: ">=" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csgew %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.Int, Token.Symbol { Value: ">" }, ExpressionType.Int)
+                => QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w csgtw %_w{{_varCount - 2}}, %_w{{_varCount - 1}}"""),
+            (ExpressionType.None or ExpressionType.Unknown, _, _)
+            or (_, _, ExpressionType.None or ExpressionType.Unknown)
+            or (_, not Token.Symbol, _)
+                => throw new UnreachableException(),
+        };
         _varCount -= 1;
     }
 
@@ -90,6 +246,21 @@ public sealed class QBEVisitor : Visitor
         }
     }
 
+    public override void Exit(TernaryExpr ternaryExpr)
+    {
+        Debug.Assert(_varCount >= 3);
+        switch (ternaryExpr.Type, ternaryExpr.OpLeft.Token)
+        {
+            case (ExpressionType.Int or ExpressionType.Bool, Token.Symbol { Value: "?" }):
+                QBEFile.AppendLine($$"""    %_w{{_varCount - 3}} =w call $_ternary_w(w %_w{{_varCount - 3}}, w %_w{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
+                break;
+            case (ExpressionType.String or ExpressionType.Function, Token.Symbol { Value: "?" }):
+                QBEFile.AppendLine($$"""    %_l{{_varCount - 3}} =l call $_ternary_l(w %_w{{_varCount - 3}}, l %_l{{_varCount - 2}}, l %_l{{_varCount - 1}})""");
+                break;
+        }
+        _varCount -= 2;
+    }
+
     public override void Visit(Primary primary)
     {
         switch (primary.TokenSpan.Token)
@@ -99,7 +270,9 @@ public sealed class QBEVisitor : Visitor
                 QBEData.AppendLine($$"""data $str_{{_strCount++}} = { b "{{s}}", b 0 }""");
                 _varCount += 1;
                 break;
-            case Token.Id { Value: string i }:
+            case Token.Id { Value: string i } when primary.Type is ExpressionType.Function:
+                QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy ${{i}}""");
+                _varCount += 1;
                 break;
             case Token.Int { Value: int i }:
                 QBEFile.AppendLine($$"""    %_w{{_varCount}} =w copy {{i}}""");
