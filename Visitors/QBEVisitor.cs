@@ -50,7 +50,7 @@ public sealed class QBEVisitor : Visitor
         @start
             %args =l loadl %args
             %b =w loaduw %args
-            %value =l call $_ternary_l(w %b, l $true, l $false)
+            %value =l call $_ternary_l(w %b, l $_true_literal, l $_false_literal)
             %r =w call $fputs(l %value, l %stream)
             %len =w call $strlen(l %value)
             %_1 =w copy -1
@@ -124,21 +124,24 @@ public sealed class QBEVisitor : Visitor
             ret %false
         }
 
-        function $_printf_int(w %int) {
+        function $_println_int(w %int) {
         @start
-            call $printf(l $int, ..., w %int)
+            %fmt =l call $_strconcat(l $_int_fmt, l $_newline)
+            call $printf(l %fmt, ..., w %int)
             ret
         }
 
-        function $_printf_str(l %str) {
+        function $_println_str(l %str) {
         @start
-            call $printf(l $str, ..., l %str)
+            %fmt =l call $_strconcat(l $_str_fmt, l $_newline)
+            call $printf(l %fmt, ..., w %str)
             ret
         }
 
-        function $_printf_bool(w %bool) {
+        function $_println_bool(w %bool) {
         @start
-            call $printf(l $bool, ..., w %bool)
+            %fmt =l call $_strconcat(l $_bool_fmt, l $_newline)
+            call $printf(l %fmt, ..., w %bool)
             ret
         }
 
@@ -158,11 +161,12 @@ public sealed class QBEVisitor : Visitor
         @start
             call $__setup_bool_specifier()
         """);
-        QBEData.AppendLine("""data $int = { b "%d\n", b 0 }""")
-        .AppendLine("""data $str = { b "%s\n", b 0 }""")
-        .AppendLine("""data $bool = { b "%b\n", b 0 }""")
-        .AppendLine("""data $true = { b "true", b 0 }""")
-        .AppendLine("""data $false = { b "false", b 0 }""");
+        QBEData.AppendLine("""data $_newline = { b "\n", b 0 }""")
+        .AppendLine("""data $_int_fmt = { b "%d", b 0 }""")
+        .AppendLine("""data $_str_fmt = { b "%s", b 0 }""")
+        .AppendLine("""data $_bool_fmt = { b "%b", b 0 }""")
+        .AppendLine("""data $_true_literal = { b "true", b 0 }""")
+        .AppendLine("""data $_false_literal = { b "false", b 0 }""");
     }
 
     public override void Exit(Parse.File file)

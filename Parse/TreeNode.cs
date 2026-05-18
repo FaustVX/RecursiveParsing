@@ -53,7 +53,7 @@ public readonly record struct FunctionSignature(string Name, ExpressionTypeUnion
 public readonly union ExpressionTypeUnion(ExpressionType, ImmutableArray<FunctionSignature>)
 {
     public static bool operator !=(ExpressionTypeUnion lhs, ExpressionTypeUnion rhs)
-    => !(lhs == rhs);
+    => !lhs.Equals(rhs);
     public static bool operator ==(ExpressionTypeUnion lhs, ExpressionTypeUnion rhs)
     => lhs.Equals(rhs);
     public override bool Equals(object? obj)

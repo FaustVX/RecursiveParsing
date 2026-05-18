@@ -15,9 +15,9 @@ try
     // ast.Accept(new TreePrintVisitor(input.AsMemory()));
     ast.Accept(new CheckTypeVisitor(new()
     {
-        [(new Token.Id("printf"), [ExpressionType.Int])] = (ExpressionType.None, "_printf_int"),
-        [(new Token.Id("printf"), [ExpressionType.String])] = (ExpressionType.None, "_printf_str"),
-        [(new Token.Id("printf"), [ExpressionType.Bool])] = (ExpressionType.None, "_printf_bool"),
+        [(new Token.Id("println"), [ExpressionType.Int])] = (ExpressionType.None, "_println_int"),
+        [(new Token.Id("println"), [ExpressionType.String])] = (ExpressionType.None, "_println_str"),
+        [(new Token.Id("println"), [ExpressionType.Bool])] = (ExpressionType.None, "_println_bool"),
         [(new Token.Symbol("+"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         [(new Token.Symbol("-"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         // [(new Token.Symbol("!"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
