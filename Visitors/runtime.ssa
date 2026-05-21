@@ -1,0 +1,145 @@
+# static int bool_arginfo(const struct printf_info *info, size_t n, int *argtypes, int *size)
+# {
+#     if (n) {
+#         argtypes[0] = PA_INT;
+#         *size = sizeof(bool);
+#     }
+#     return 1;
+# }
+function w $__bool_arginfo(l %info, l %n, l %argstypes, l %size){
+@start
+    jnz %n, @true, @false
+@true
+    %pa_int =w copy 1
+    storew %pa_int, %argstypes
+    storew %pa_int, %size
+@false
+    ret 1
+}
+
+# static int bool_printf(FILE *stream, const struct printf_info *info, const void *const *args)
+# {
+#     bool b =  *(const bool*)(args[0]);
+#     int r = fputs(b ? "true" : "false", stream);
+#     return r == EOF ? -1 : (b ? 4 : 5);
+# }
+function w $__bool_printf(l %stream, l %info, l %args){
+@start
+    %args =l loadl %args
+    %b =w loaduw %args
+    %value =l call $_ternary_l(w %b, l $_true_literal, l $_false_literal)
+    %r =w call $fputs(l %value, l %stream)
+    %len =w call $strlen(l %value)
+    %_1 =w copy -1
+    %b =w ceqw %r, %_1
+    %r =w call $_ternary_w(w %b, w -1, w %len)
+    ret %r
+}
+
+# static int setup_bool_specifier()
+# {
+#     int r = register_printf_specifier('B', bool_printf, bool_arginfo);
+#     return r;
+# }
+function $__setup_bool_specifier() {
+@start
+    %b =w copy 98
+    %printf =l copy $__bool_printf
+    %arginfo =l copy $__bool_arginfo
+    %_ =w call $register_printf_specifier(w %b, l %printf, l %arginfo)
+    jnz %_, @true, @false
+@false
+    ret
+@true
+    hlt
+}
+
+# char* concat(const char *s1, const char *s2)
+# {
+#     char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+#     // in real code you would check for errors in malloc here
+#     strcpy(result, s1);
+#     strcat(result, s2);
+#     return result;
+# }
+function l $_strconcat(l %lhs, l %rhs) {
+@start
+    %len =l call $strlen(l %lhs)
+    %len1 =l call $strlen(l %rhs)
+    %len =l add %len, %len1
+    %len1 =l copy 1
+    %len =l add %len, %len1
+    %m =l call $malloc(l %len)
+    %_ =l call $strcpy(l %m, l %lhs)
+    %_ =l call $strcat(l %m, l %rhs)
+    ret %m
+}
+
+function w $_strcmp(l %lhs, l %rhs) {
+@start
+    %cmp =w call $strcmp(l %lhs, l %rhs)
+    %val =w copy 0
+    %cmp =w ceqw %cmp, %val
+    ret %cmp
+}
+
+function w $_ternary_w(w %test, w %true, w %false) {
+@start
+    jnz %test, @true, @false
+@true
+    ret %true
+@false
+    ret %false
+}
+
+function l $_ternary_l(w %test, l %true, l %false) {
+@start
+    jnz %test, @true, @false
+@true
+    ret %true
+@false
+    ret %false
+}
+
+function $_println_int(w %int) {
+@start
+    %fmt =l call $_strconcat(l $_int_fmt, l $_newline)
+    call $printf(l %fmt, ..., w %int)
+    call $free(l %fmt)
+    ret
+}
+
+function $_println_str(l %str) {
+@start
+    %fmt =l call $_strconcat(l $_str_fmt, l $_newline)
+    call $printf(l %fmt, ..., w %str)
+    call $free(l %fmt)
+    ret
+}
+
+function $_println_bool(w %bool) {
+@start
+    %fmt =l call $_strconcat(l $_bool_fmt, l $_newline)
+    call $printf(l %fmt, ..., w %bool)
+    call $free(l %fmt)
+    ret
+}
+
+function $_call_n_w(l %fun, w %arg1) {
+@start
+    call %fun(w %arg1)
+    ret
+}
+
+function $_call_n_l(l %fun, l %arg1) {
+@start
+    call %fun(l %arg1)
+    ret
+}
+
+data $_newline = { b "\n", b 0 }
+data $_int_fmt = { b "%d", b 0 }
+data $_str_fmt = { b "%s", b 0 }
+data $_bool_fmt = { b "%b", b 0 }
+data $_true_literal = { b "true", b 0 }
+data $_false_literal = { b "false", b 0 }

@@ -6,7 +6,7 @@ bin/input: obj/input.s
 obj/input.s: obj/input.ssa
 	qbe -o $@ $^
 
-obj/input.ssa: bin/Debug/net11.0/RecursiveParsing.dll input.txt
+obj/input.ssa: bin/Debug/net11.0/RecursiveParsing.dll input.txt Visitors/runtime.ssa
 	~/dotnet/dotnet $^
 
 bin/Debug/net11.0/RecursiveParsing.dll: *.*proj out/Ext.g.cs $(shell find . -not \( -path "./lib/*" -o -path "./obj/*" \) -name "*.cs")
