@@ -197,9 +197,9 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
 
         IEnumerable<FunctionSignature> GetFunctionCandidates(Token.Id id)
         {
-            foreach (var ((name, args), (type, funcName)) in _functionsSignature)
+            foreach (var ((name, args), (type, _)) in _functionsSignature)
                 if (name == id)
-                    yield return new(funcName, type, args);
+                    yield return new(type, args);
         }
     }
 
@@ -249,9 +249,9 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
 
         IEnumerable<FunctionSignature> GetFunctionCandidates(Token.Symbol id, int argsCount)
         {
-            foreach (var ((name, args), (type, funcName)) in _functionsSignature)
+            foreach (var ((name, args), (type, _)) in _functionsSignature)
                 if (argsCount == args.Length && name == id)
-                    yield return new(funcName, type, args);
+                    yield return new(type, args);
         }
     }
 

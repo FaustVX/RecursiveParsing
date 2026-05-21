@@ -9,11 +9,11 @@ using RecursiveParsing.Visitors;
 
 var input = (args is [var p,..] && new FileInfo(p) is { Exists: true, Extension: ".txt", FullName: var f }) ? System.IO.File.ReadAllText(f) : throw new Exception();
 var name = Path.GetFileNameWithoutExtension(f);
+TreeNode? ast = default;
 try
 {
-    var ast = new Parser(input).ParseFile();
-    // ast.Accept(new TreePrintVisitor(input.AsMemory()));
-    ast.Accept(new CheckTypeVisitor(new()
+    ast = new Parser(input).ParseFile();
+    var functions = new Dictionary<(Token, System.Collections.Immutable.ImmutableArray<ExpressionTypeUnion>), (ExpressionTypeUnion type, string funcName)>()
     {
         [(new Token.Id("println"), [ExpressionType.Int])] = (ExpressionType.None, "_println_int"),
         [(new Token.Id("print"), [ExpressionType.Int])] = (ExpressionType.None, "_print_int"),
@@ -40,14 +40,16 @@ try
         [(new Token.Symbol("=="), [ExpressionType.Bool, ExpressionType.Bool])] = (ExpressionType.Bool, "ceqw"),
         [(new Token.Symbol("<="), [ExpressionType.Bool, ExpressionType.Bool])] = (ExpressionType.Bool, "ceqw"),
         [(new Token.Symbol("+"), [ExpressionType.String, ExpressionType.String])] = (ExpressionType.String, "_strconcat"),
-    }));
-    ast.Accept(new TreeTypePrintVisitor(input.AsMemory()));
-    var qbe = new QBEVisitor();
+    };
+    ast.Accept(new CheckTypeVisitor(functions));
+    var qbe = new QBEVisitor(functions);
     ast.Accept(qbe);
     System.IO.File.WriteAllBytes(@$"obj/{name}.ssa", Encoding.ASCII.GetBytes(qbe.QBEFile.ToString().Replace("\r\n", "\n")));
 }
 catch (EBNFException ex)
 {
+    ast?.Accept(new TreePrintVisitor(input.AsMemory()));
+    ast?.Accept(new TreeTypePrintVisitor(input.AsMemory()));
     var (l, c) = ex.Range.Start.GetPos(input);
     Console.WriteLine($"[{f}:{l}:{c}]: {ex.SubCategory} {ex.ErrorCode}: {ex.Message}");
     return 1;

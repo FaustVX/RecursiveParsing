@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using RecursiveParsing.Parse;
 using RecursiveParsing.Tokenize;
@@ -8,8 +11,27 @@ namespace RecursiveParsing.Visitors;
 
 // https://c9x.me/compile/
 
-public sealed class QBEVisitor : Visitor
+public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUnion>), (ExpressionTypeUnion type, string funcName)> functions) : Visitor
 {
+    private readonly FrozenDictionary<(Token, ImmutableArray<ExpressionTypeUnion>), (ExpressionTypeUnion type, string funcName)> _functionsSignature = [with(new FunctionEquality()), ..functions];
+    sealed class FunctionEquality : IEqualityComparer<(Token, ImmutableArray<ExpressionTypeUnion>)>
+    {
+        public bool Equals((Token, ImmutableArray<ExpressionTypeUnion>) x, (Token, ImmutableArray<ExpressionTypeUnion>) y)
+        => x.Item1 == y.Item1 && x.Item2.SequenceEqual(y.Item2);
+
+        public int GetHashCode([DisallowNull] (Token, ImmutableArray<ExpressionTypeUnion>) obj)
+        => HashCode.Combine(obj.Item1, ((IStructuralEquatable)obj.Item2).GetHashCode(new ImmutableArrayEquality()));
+
+        sealed class ImmutableArrayEquality : System.Collections.IEqualityComparer
+        {
+            public new bool Equals(object? x, object? y)
+            => (x, y) is (ExpressionTypeUnion l, ExpressionTypeUnion r) ? l == r : throw new Exception();
+
+            public int GetHashCode(object obj)
+            => obj is ExpressionTypeUnion t ? t.GetHashCode() : throw new Exception();
+        }
+    }
+
     public StringBuilder QBEFile = new();
     public StringBuilder QBEData = new();
 
@@ -58,13 +80,14 @@ public sealed class QBEVisitor : Visitor
 
     public override void Exit(BinaryExpr binaryExpr)
     {
-        Console.WriteLine(string.Join(" or ", binaryExpr.Signatures));
         Debug.Assert(_varCount >= 2);
+#pragma warning disable CS8846 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
         _ = binaryExpr.Signatures switch
+#pragma warning restore CS8846 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
         {
-            { Length: not 1 } or [{ Name.Length: 0 } or { Args.Length: not 2 }] => throw new UnreachableException(),
-            [{ Name: ['_', ..], Return: var ret, Args: [var lhs, var rhs] } sig] => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} call ${{sig.Name}}({{TypeToQBE(lhs)}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, {{TypeToQBE(rhs)}} %_{{TypeToQBE(rhs)}}{{_varCount - 1}})"""),
-            [{ Return: var ret, Args: [var lhs, var rhs] } sig] => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} {{sig.Name}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, %_{{TypeToQBE(rhs)}}{{_varCount - 1}}"""),
+            { Length: not 1 } or [{ Args.Length: not 2 }] => throw new UnreachableException(),
+            [{ Return: var ret, Args: [var lhs, var rhs] } sig] when FunctionNameFromSignature(binaryExpr.Operator.Token, sig) is var name and ['_', ..] => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} call ${{name}}({{TypeToQBE(lhs)}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, {{TypeToQBE(rhs)}} %_{{TypeToQBE(rhs)}}{{_varCount - 1}})"""),
+            [{ Return: var ret, Args: [var lhs, var rhs] } sig] when FunctionNameFromSignature(binaryExpr.Operator.Token, sig) is var name => QBEFile.AppendLine($$"""    %_{{TypeToQBE(ret)}}{{_varCount - 2}} ={{TypeToQBE(ret)}} {{name}} %_{{TypeToQBE(lhs)}}{{_varCount - 2}}, %_{{TypeToQBE(rhs)}}{{_varCount - 1}}"""),
         };
         _varCount -= 1;
     }
@@ -74,7 +97,7 @@ public sealed class QBEVisitor : Visitor
     {
         ImmutableArray<FunctionSignature> or ExpressionType.String => 'l',
         ExpressionType.Bool or ExpressionType.Int => 'w',
-        _ => throw new UnreachableException(),
+        ExpressionType or null => throw new UnreachableException(),
     };
 
     public override void Exit(PrefixExpr prefixExpr)
@@ -115,8 +138,8 @@ public sealed class QBEVisitor : Visitor
                 QBEData.AppendLine($$"""data $str_{{_strCount++}} = { b "{{s}}", b 0 }""");
                 _varCount += 1;
                 break;
-            case Token.Id when primary.Type is ImmutableArray<FunctionSignature> { Length: 1 } sig:
-                QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy ${{sig[0].Name}}""");
+            case Token.Id id when primary.Type is ImmutableArray<FunctionSignature> { Length: 1 } sig:
+                QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy ${{FunctionNameFromSignature(id, sig[0])}}""");
                 _varCount += 1;
                 break;
             case Token.Int { Value: int i }:
@@ -125,5 +148,12 @@ public sealed class QBEVisitor : Visitor
                 break;
             default: throw new UnreachableException();
         }
+    }
+
+    private string FunctionNameFromSignature(Token name, FunctionSignature signature)
+    {
+        if (_functionsSignature.TryGetValue((name, signature.Args), out var infos) && signature.Return == infos.type)
+            return infos.funcName;
+        throw new UnreachableException();
     }
 }

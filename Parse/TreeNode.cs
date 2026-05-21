@@ -14,10 +14,16 @@ public enum ExpressionType
     Function,
 }
 
-public readonly record struct FunctionSignature(string Name, ExpressionTypeUnion Return, ImmutableArray<ExpressionTypeUnion> Args)
+public readonly record struct FunctionSignature(ExpressionTypeUnion Return, ImmutableArray<ExpressionTypeUnion> Args)
 {
     public override string ToString()
-    => $"{Name}({string.Join(", ", Args)}): {Return}";
+    => $"({string.Join(", ", Args)}): {Return}";
+
+    public bool Equals(FunctionSignature other)
+    => Return == other.Return && ((IStructuralEquatable)Args).Equals(other.Args, Equatable.Instance);
+
+    public override int GetHashCode()
+    => HashCode.Combine(Return, Args);
 
     public bool IsCompatibleWith(ImmutableArray<Expression> args)
     => args.Length == Args.Length && Args.Zip(args.Select(a => a.Type)).All(a => a.First == a.Second);
@@ -38,15 +44,18 @@ public readonly record struct FunctionSignature(string Name, ExpressionTypeUnion
     {
         private Equatable() {}
         public static Equatable Instance { get; } = new();
-        public new bool Equals(object? x, object? y)
+        bool IEqualityComparer.Equals(object? x, object? y)
+        => (x, y) switch
         {
-            throw new NotImplementedException();
-        }
+            (ExpressionTypeUnion lhs, ExpressionTypeUnion rhs) => lhs.Equals(rhs),
+            (ExpressionType lhs, ExpressionType rhs) => lhs.Equals(rhs),
+            (FunctionSignature lhs, FunctionSignature rhs) => lhs.Equals(rhs),
+            (null, null) => true,
+            _ => false,
+        };
 
         public int GetHashCode(object obj)
-        {
-            throw new NotImplementedException();
-        }
+        => obj is FunctionSignature f ? f.GetHashCode() : 0;
     }
 }
 
