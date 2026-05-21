@@ -128,6 +128,7 @@ public sealed class QBEVisitor : Visitor
         @start
             %fmt =l call $_strconcat(l $_int_fmt, l $_newline)
             call $printf(l %fmt, ..., w %int)
+            call $free(l %fmt)
             ret
         }
 
@@ -135,6 +136,7 @@ public sealed class QBEVisitor : Visitor
         @start
             %fmt =l call $_strconcat(l $_str_fmt, l $_newline)
             call $printf(l %fmt, ..., w %str)
+            call $free(l %fmt)
             ret
         }
 
@@ -142,6 +144,7 @@ public sealed class QBEVisitor : Visitor
         @start
             %fmt =l call $_strconcat(l $_bool_fmt, l $_newline)
             call $printf(l %fmt, ..., w %bool)
+            call $free(l %fmt)
             ret
         }
 
