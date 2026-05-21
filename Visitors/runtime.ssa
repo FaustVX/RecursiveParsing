@@ -109,6 +109,12 @@ function $_println_int(w %int) {
     ret
 }
 
+function $_print_int(w %int) {
+@start
+    call $printf(l $_int_fmt, ..., w %int)
+    ret
+}
+
 function $_println_str(l %str) {
 @start
     %fmt =l call $_strconcat(l $_str_fmt, l $_newline)
@@ -117,11 +123,23 @@ function $_println_str(l %str) {
     ret
 }
 
+function $_print_str(l %str) {
+@start
+    call $printf(l $_str_fmt, ..., w %str)
+    ret
+}
+
 function $_println_bool(w %bool) {
 @start
     %fmt =l call $_strconcat(l $_bool_fmt, l $_newline)
     call $printf(l %fmt, ..., w %bool)
     call $free(l %fmt)
+    ret
+}
+
+function $_print_bool(w %bool) {
+@start
+    call $printf(l $_bool_fmt, ..., w %bool)
     ret
 }
 

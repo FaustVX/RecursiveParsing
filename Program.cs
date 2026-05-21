@@ -16,8 +16,11 @@ try
     ast.Accept(new CheckTypeVisitor(new()
     {
         [(new Token.Id("println"), [ExpressionType.Int])] = (ExpressionType.None, "_println_int"),
+        [(new Token.Id("print"), [ExpressionType.Int])] = (ExpressionType.None, "_print_int"),
         [(new Token.Id("println"), [ExpressionType.String])] = (ExpressionType.None, "_println_str"),
+        [(new Token.Id("print"), [ExpressionType.String])] = (ExpressionType.None, "_print_str"),
         [(new Token.Id("println"), [ExpressionType.Bool])] = (ExpressionType.None, "_println_bool"),
+        [(new Token.Id("print"), [ExpressionType.Bool])] = (ExpressionType.None, "_print_bool"),
         [(new Token.Symbol("+"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         [(new Token.Symbol("-"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         // [(new Token.Symbol("!"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
