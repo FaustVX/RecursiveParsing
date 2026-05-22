@@ -107,7 +107,7 @@ file sealed class InvalidArgumentTypeException(Call call, ImmutableHashSet<Immut
     public override string Message => $"Invalid argument type, should be {string.Join(" or ", Expected.Select(s => $"({string.Join(", ", s)})"))}, but got ({string.Join(", ", Call.Args.Select(a => a.Type))})";
 }
 
-readonly union Call(CallExpr, BinaryExpr, PrefixExpr, PostfixExpr)
+readonly union Call(CallExpr, BinaryExpr, PrefixExpr)
 {
     public readonly Range Span => ((Expression)Value!).Span;
 
@@ -234,12 +234,6 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
 
     public override void Exit(PrefixExpr prefixExpr)
     => ExitCall(prefixExpr);
-
-    public override void Enter(PostfixExpr postfixExpr)
-    => EnterCall(postfixExpr);
-
-    public override void Exit(PostfixExpr postfixExpr)
-    => ExitCall(postfixExpr);
 
     public override void Enter(BinaryExpr binaryExpr)
     {

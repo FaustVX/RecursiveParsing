@@ -134,20 +134,7 @@ sealed partial class Parser
             var end = tokenizer.PreviousSpan.End;
             return new PrefixExpr(t, right, start..end) { Precedence = ExpressionPrecedence.Unary };
         }
-        return Parse_Exponentiation(tokenizer);
-    }
-
-    private partial Expression Parse_Exponentiation(Tokenizer tokenizer)
-    {
-        var start = tokenizer.CurrentSpan.Start;
-        var expr = Parse_Postfix(tokenizer);
-        if (Helper.TryConsume(tokenizer, new Token.Symbol("^"), out var t))
-        {
-            var right = Parse_Exponentiation(tokenizer);
-            var end = tokenizer.PreviousSpan.End;
-            return new BinaryExpr(expr, t, right, start..end) { Precedence = ExpressionPrecedence.Exponentiation };
-        }
-        return expr;
+        return Parse_Postfix(tokenizer);
     }
 
     private partial Expression Parse_Postfix(Tokenizer tokenizer)
@@ -158,12 +145,7 @@ sealed partial class Parser
         return expr;
         Expression ParseA(Tokenizer tokenizer)
         {
-            if (Helper.TryConsume(tokenizer, new Token.Symbol("!"), out var t))
-            {
-                var end = tokenizer.CurrentSpan.End;
-                return expr = new PostfixExpr(expr, t, start..end) { Precedence = ExpressionPrecedence.Postfix };
-            }
-            else if (Helper.TryConsume(tokenizer, new Token.Symbol("("), out t))
+            if (Helper.TryConsume(tokenizer, new Token.Symbol("("), out var t))
             {
                 if (Helper.TryConsume(tokenizer, new Token.Symbol(")")))
                     return expr = new CallExpr(expr, [], start..tokenizer.CurrentSpan.End) { Precedence = ExpressionPrecedence.Postfix };

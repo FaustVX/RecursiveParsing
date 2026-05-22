@@ -37,17 +37,6 @@ public partial class TreeTypePrintVisitor(ReadOnlyMemory<char> input) : Visitor
         _depth--;
     }
 
-    public override void Enter(PostfixExpr postfixExpr)
-    {
-        PrintTree(input.Span, postfixExpr, isTerminal: false);
-        _depth++;
-    }
-
-    public override void Exit(PostfixExpr postfixExpr)
-    {
-        _depth--;
-    }
-
     public override void Enter(BinaryExpr binaryExpr)
     {
         PrintTree(input.Span, binaryExpr, isTerminal: false);
