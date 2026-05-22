@@ -1,19 +1,26 @@
 {
-    switch rand(3)
+    switch readln("nb faces on the die (2, 4, 6, 20)? ")
     {
-        case 0 println(0);
-        case 1 println(1);
-        default println("default");
-    }
-
-    if rand(2) == 1
-    {
-        (rand(2) == 1 ? print : println)(rand(2) == 1 ? 12 : 21);
-        println("hi");
-    }
-    else
-    {
-        if rand(2) == 1
-            println(14);
+        case "2"
+        {
+            print("the coin landed on ");
+            println(rand(2) == 1 ? "head" : "tail");
+        }
+        case "4"
+        {
+            print("you throw a ");
+            println(rand(4) + 1);
+        }
+        case "6"
+        {
+            print("you throw a ");
+            println(rand(6) + 1);
+        }
+        case "20"
+        {
+            print("you throw a ");
+            println(rand(20) + 1);
+        }
+        default println("invalid number");
     }
 }

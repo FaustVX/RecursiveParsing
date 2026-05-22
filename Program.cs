@@ -24,6 +24,8 @@ try
         [(new Token.Id("rand"), [ExpressionType.Int, ExpressionType.Int])] = (ExpressionType.Int, "_rand_min_max"),
         [(new Token.Id("rand"), [ExpressionType.Int])] = (ExpressionType.Int, "_rand_max"),
         [(new Token.Id("rand"), [])] = (ExpressionType.Int, "_rand"),
+        [(new Token.Id("readln"), [])] = (ExpressionType.String, "_readln"),
+        [(new Token.Id("readln"), [ExpressionType.String])] = (ExpressionType.String, "_readln_prompt"),
         [(new Token.Symbol("+"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         [(new Token.Symbol("-"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         [(new Token.Symbol("!"), [ExpressionType.Bool])] = (ExpressionType.Bool, ""),

@@ -103,6 +103,28 @@ function w $_strne(l %lhs, l %rhs) {
     ret %cmp
 }
 
+function l $_readln() {
+@start
+    %len =l alloc8 8
+    %line =l alloc8 8
+    storel 0, %len
+    storel 0, %line
+    %stdinptr =l loadl $stdin
+    %full_size =l call $getline(l %line, l %len, l %stdinptr)
+    %line =l loadl %line
+    %full_size =l add %line, %full_size
+    %full_size =l sub %full_size, 1
+    storel 0, %full_size
+    ret %line
+}
+
+function l $_readln_prompt(l %prompt) {
+@start
+    call $_print_str(l %prompt)
+    %line =l call $_readln()
+    ret %line
+}
+
 function $_println_int(w %int) {
 @start
     %fmt =l call $_strconcat(l $_int_fmt, l $_newline)
