@@ -47,6 +47,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
         export function w $main() {
         @start
             call $__setup_bool_specifier()
+            call $_srand()
         """);
         QBEData.AppendLine("""data $_main_return_value = { w 0 }""");
     }
@@ -68,13 +69,31 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
         switch (callExpr)
         {
             case { Type: ExpressionType.None, Args: [{Type: ExpressionType.String or ImmutableArray<FunctionSignature> { Length: 1 }}] }:
+                Debug.Assert(_varCount >= 2);
                 QBEFile.AppendLine($$"""    call $_call_n_l(l %_l{{_varCount - 2}}, l %_l{{_varCount - 1}})""");
                 _varCount -= 2;
                 break;
             case { Type: ExpressionType.None, Args: [{Type: ExpressionType.Int or ExpressionType.Bool}] }:
+                Debug.Assert(_varCount >= 2);
                 QBEFile.AppendLine($$"""    call $_call_n_w(l %_l{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
                 _varCount -= 2;
                 break;
+            case { Type: ExpressionType.Int or ExpressionType.Bool, Args: [{Type: ExpressionType.Int or ExpressionType.Bool}] }:
+                Debug.Assert(_varCount >= 2);
+                QBEFile.AppendLine($$"""    %_w{{_varCount - 2}} =w call $_call_w_w(l %_l{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
+                _varCount -= 1;
+                break;
+            case { Type: ExpressionType.Int or ExpressionType.Bool, Args: [{Type: ExpressionType.Int or ExpressionType.Bool}, {Type: ExpressionType.Int or ExpressionType.Bool}] }:
+                Debug.Assert(_varCount >= 3);
+                QBEFile.AppendLine($$"""    %_w{{_varCount - 3}} =w call $_call_w_ww(l %_l{{_varCount - 3}}, w %_w{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
+                _varCount -= 2;
+                break;
+            case { Type: ExpressionType.Int or ExpressionType.Bool, Args: [] }:
+                Debug.Assert(_varCount >= 1);
+                QBEFile.AppendLine($$"""    %_w{{_varCount - 1}} =w call $_call_w(l %_l{{_varCount - 1}})""");
+                _varCount -= 0;
+                break;
+            default: throw new UnreachableException();
         }
     }
 
@@ -95,9 +114,9 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
     static char TypeToQBE(ExpressionTypeUnion type)
     => type switch
     {
-        ImmutableArray<FunctionSignature> or ExpressionType.String => 'l',
+        ImmutableArray<FunctionSignature> { Length: 1 } or ExpressionType.String or ExpressionType.Function => 'l',
         ExpressionType.Bool or ExpressionType.Int => 'w',
-        ExpressionType or null => throw new UnreachableException(),
+        ExpressionType or ImmutableArray<FunctionSignature> or null => throw new UnreachableException(),
     };
 
     public override void Exit(PrefixExpr prefixExpr)

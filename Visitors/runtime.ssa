@@ -118,14 +118,14 @@ function $_print_int(w %int) {
 function $_println_str(l %str) {
 @start
     %fmt =l call $_strconcat(l $_str_fmt, l $_newline)
-    call $printf(l %fmt, ..., w %str)
+    call $printf(l %fmt, ..., l %str)
     call $free(l %fmt)
     ret
 }
 
 function $_print_str(l %str) {
 @start
-    call $printf(l $_str_fmt, ..., w %str)
+    call $printf(l $_str_fmt, ..., l %str)
     ret
 }
 
@@ -149,10 +149,68 @@ function $_call_n_w(l %fun, w %arg1) {
     ret
 }
 
+function w $_call_w_w(l %fun, w %arg1) {
+@start
+    %ret =w call %fun(w %arg1)
+    ret %ret
+}
+
+function w $_call_w_ww(l %fun, w %arg1, w %arg2) {
+@start
+    %ret =w call %fun(w %arg1, w %arg2)
+    ret %ret
+}
+
 function $_call_n_l(l %fun, l %arg1) {
 @start
     call %fun(l %arg1)
     ret
+}
+
+function $_call_n(l %fun) {
+@start
+    call %fun()
+    ret
+}
+
+function w $_call_w(l %fun) {
+@start
+    %ret =w call %fun()
+    ret %ret
+}
+
+function w $_rand_min_max(w %min, w %max) {
+@start
+    %range =w sub %max, %min
+    %rand =w call $_rand_max(w %range)
+    %rand =w add %rand, %min
+    ret %rand
+}
+
+function w $_rand_max(w %max) {
+@start
+    %rand =w call $rand()
+    %rand =w rem %rand, %max
+    ret %rand
+}
+
+function w $_rand() {
+@start
+    %rand =w call $rand()
+    ret %rand
+}
+
+function $_srand() {
+@start
+    %time =l call $_time()
+    call $srand(l %time)
+    ret 
+}
+
+function w $_time() {
+@start
+    %time =w call $time(l 0)
+    ret %time
 }
 
 data $_newline = { b "\n", b 0 }
