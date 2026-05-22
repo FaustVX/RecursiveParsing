@@ -23,7 +23,7 @@ public partial class Parser
     private Node ParseNode(Tokenizer tokenizer)
     {
         var start = tokenizer.CurrentSpan.Start;
-        var id = (Postfix)ParsePostfix(tokenizer);
+        var id = ParsePostfix(tokenizer) is Postfix post ? post : throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
         var @params = TryCall(tokenizer).Cast<Sequence>().ToImmutableArray();
         TokenSpan node = default;
         if (TryConsume(tokenizer, new Token.Symbol { Value = ":" }))
