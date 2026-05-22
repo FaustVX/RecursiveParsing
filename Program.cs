@@ -27,6 +27,7 @@ try
         [(new Token.Id("rand"), [])] = (ExpressionType.Int, "_rand"),
         [(new Token.Symbol("+"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
         [(new Token.Symbol("-"), [ExpressionType.Int])] = (ExpressionType.Int, ""),
+        [(new Token.Symbol("!"), [ExpressionType.Bool])] = (ExpressionType.Bool, ""),
         [(new Token.Symbol("+"), [ExpressionType.Int, ExpressionType.Int])] = (ExpressionType.Int, "add"),
         [(new Token.Symbol("-"), [ExpressionType.Int, ExpressionType.Int])] = (ExpressionType.Int, "sub"),
         [(new Token.Symbol("*"), [ExpressionType.Int, ExpressionType.Int])] = (ExpressionType.Int, "mul"),

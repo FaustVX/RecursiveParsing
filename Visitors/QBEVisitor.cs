@@ -179,6 +179,9 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
             case Token.Symbol { Value: "-" }:
                 QBEFile.AppendLine($$"""    %_w{{_varCount - 1}} =w neg %_w{{_varCount - 1}}""");
                 break;
+            case Token.Symbol { Value: "!" }:
+                QBEFile.AppendLine($$"""    %_w{{_varCount - 1}} =w sub 1, %_w{{_varCount - 1}}""");
+                break;
             default: throw new UnreachableException();
         }
     }
@@ -214,6 +217,14 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
             case Token.String { Value: string s }:
                 QBEFile.AppendLine($$"""    %_l{{_varCount}} =l copy $str_{{_strCount}}""");
                 _QBEDatas.AppendLine($$"""data $str_{{_strCount++}} = { b "{{s}}", b 0 }""");
+                _varCount += 1;
+                break;
+            case Token.Id { Value: "true" }:
+                QBEFile.AppendLine($$"""    %_w{{_varCount}} =w copy 1""");
+                _varCount += 1;
+                break;
+            case Token.Id { Value: "false" }:
+                QBEFile.AppendLine($$"""    %_w{{_varCount}} =w copy 0""");
                 _varCount += 1;
                 break;
             case Token.Id id when primary.Type is ImmutableArray<FunctionSignature> { Length: 1 } sig:

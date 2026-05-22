@@ -189,6 +189,7 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
     {
         primary.Type = primary.TokenSpan.Token switch
         {
+            Token.Id { Value: "true" or "false" } => ExpressionType.Bool,
             Token.String => ExpressionType.String,
             Token.Int => ExpressionType.Int,
             Token.Id id => _functionsName.Contains(id) ? GetFunctionCandidates(id).ToImmutableArray() : ExpressionType.Unknown,

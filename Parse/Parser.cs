@@ -128,7 +128,7 @@ sealed partial class Parser
     private partial Expression Parse_Unary(Tokenizer tokenizer)
     {
         var start = tokenizer.CurrentSpan.Start;
-        if (Helper.TryConsume(tokenizer, new Token.Symbol("+"), out var t) || Helper.TryConsume(tokenizer, new Token.Symbol("-"), out t))
+        if (Helper.TryConsume(tokenizer, new Token.Symbol("+"), out var t) || Helper.TryConsume(tokenizer, new Token.Symbol("-"), out t) || Helper.TryConsume(tokenizer, new Token.Symbol("!"), out t))
         {
             var right = Parse_Unary(tokenizer);
             var end = tokenizer.PreviousSpan.End;

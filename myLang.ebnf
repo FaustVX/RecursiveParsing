@@ -19,7 +19,7 @@ equation: expression := relational (("==" | "!=") relational)?
 relational: expression := additive (("<" | ">" | "<=" | ">=") additive)?
 additive: expression := term (("+" | "-") term)*
 term: expression := unary (("*" | "/") unary)*
-unary: expression := ("+" | "-") unary | postfix
+unary: expression := ("+" | "-" | "!") unary | postfix
 postfix: expression := primary ("(" args? ")")*
-primary: expression := ID | NUMBER | STRING | "(" expression ")"
+primary: expression := ID | NUMBER | STRING | "true" | "false" | "(" expression ")"
 args: expression* := expression ( "," expression)*
