@@ -143,42 +143,6 @@ function $_print_bool(w %bool) {
     ret
 }
 
-function $_call_n_w(l %fun, w %arg1) {
-@start
-    call %fun(w %arg1)
-    ret
-}
-
-function w $_call_w_w(l %fun, w %arg1) {
-@start
-    %ret =w call %fun(w %arg1)
-    ret %ret
-}
-
-function w $_call_w_ww(l %fun, w %arg1, w %arg2) {
-@start
-    %ret =w call %fun(w %arg1, w %arg2)
-    ret %ret
-}
-
-function $_call_n_l(l %fun, l %arg1) {
-@start
-    call %fun(l %arg1)
-    ret
-}
-
-function $_call_n(l %fun) {
-@start
-    call %fun()
-    ret
-}
-
-function w $_call_w(l %fun) {
-@start
-    %ret =w call %fun()
-    ret %ret
-}
-
 function w $_rand_min_max(w %min, w %max) {
 @start
     %range =w sub %max, %min
