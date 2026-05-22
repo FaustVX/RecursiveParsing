@@ -486,7 +486,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
                                 TreeNode.AppendLine($$"""
                                         if ({{p}} is {} {{IdToCSharpCamel[prop]}})
                                         {
-                                            _node.Accept(visitor);
+                                            {{IdToCSharpCamel[prop]}}.Accept(visitor);
                                         }
                                 """);
                             else
@@ -494,7 +494,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
                                         if ({{p}} is {} {{IdToCSharpCamel[prop]}})
                                         {
                                             visitor.Visit(this);
-                                            _node.Accept(visitor);
+                                            {{IdToCSharpCamel[prop]}}.Accept(visitor);
                                         }
                                 """);
                             break;
@@ -780,6 +780,7 @@ public class CSharpVisitor(string @namespace) : IVisitor
     {
         public Dictionary<Primary, string> PascalCaseID = [];
         public Dictionary<Primary, string> CamelCaseID = [];
+        private static readonly FrozenSet<string> CSharpKeywords = ["abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while", "add", "allows", "alias", "and", "ascending", "args", "async", "await", "by", "descending", "dynamic", "equals", "extension", "field", "file", "from", "get", "global", "group", "init", "into", "join", "let", "managed", "nameof", "nint", "not", "notnull", "nuint", "on", "or", "orderby", "partial", "record", "remove", "required", "scoped", "select", "set", "unmanaged", "value", "var", "when", "where", "with", "yield",];
 
         void IVisitor.Visit(Primary primary)
         {
@@ -810,7 +811,7 @@ Camel:
             ref var camel = ref CollectionsMarshal.GetValueRefOrAddDefault(CamelCaseID, primary, out exists);
             if (exists)
                 return;
-            camel = string.Create(id.Length - id.Count(c => c is '-'), id.AsSpan(), (c, s) =>
+            camel = CSharpKeywords.Contains(id) ? "@" + id : string.Create(id.Length - id.Count(c => c is '-'), id.AsSpan(), (c, s) =>
             {
                 c[0] = char.ToLower(s[0]);
                 c = c[1..];
