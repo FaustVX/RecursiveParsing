@@ -1,4 +1,11 @@
 {
+    switch rand(3)
+    {
+        case 0 println(0);
+        case 1 println(1);
+        default println("default");
+    }
+
     if rand(2) == 1
     {
         (rand(2) == 1 ? print : println)(rand(2) == 1 ? 12 : 21);

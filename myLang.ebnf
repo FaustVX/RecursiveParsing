@@ -8,12 +8,20 @@ call-expr?(expression expression, expression* args) : expression
 statement* : tree-node
 expression-statement?(expression expression) : statement
 if-statement?(expression condition, statement then, statement? else) : statement
+switch-statement?(expression value, switch-element* elements) : statement
+switch-element*(statement statement): tree-node
+switch-case?(expression expression, statement statement): switch-element(statement)
+switch-default?(statement statement): switch-element(statement)
 block-statement?(statement* statements) : statement
 file?(statement* statements) : tree-node
 
 statement: statement := block-statement | branch-statement | expression-statement
 block-statement: block-statement := ("{" (statement)* "}")
-branch-statement: if-statement := "if" expression statement ( "else" statement )?
+branch-statement: statement := if-statement | switch-statement
+if-statement: if-statement := "if" expression statement ( "else" statement )?
+switch-statement: switch-statement := "switch" expression "{" (switch-case | switch-default)* "}"
+switch-case: switch-case := "case" expression statement
+switch-default: switch-default := "default" statement
 expression-statement: expression-statement := expression ";"
 expression: expression := conditionnal
 conditionnal: expression := equation ("?" expression ":" conditionnal)?

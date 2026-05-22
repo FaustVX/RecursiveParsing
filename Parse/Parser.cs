@@ -33,12 +33,21 @@ sealed partial class Parser
     {
         if (tokenizer.CurrentToken is Token.Symbol { Value: "{" })
             return Parse_BlockStatement(tokenizer);
-        if (tokenizer.CurrentToken is Token.Id { Value: "if" })
+        if (tokenizer.CurrentToken is Token.Id { Value: "if" or "switch" })
             return Parse_BranchStatement(tokenizer);
         return Parse_ExpressionStatement(tokenizer);
     }
 
-    private partial IfStatement Parse_BranchStatement(Tokenizer tokenizer)
+    private partial Statement Parse_BranchStatement(Tokenizer tokenizer)
+    {
+        if (tokenizer.CurrentToken is Token.Id { Value: "if" })
+            return Parse_IfStatement(tokenizer);
+        if (tokenizer.CurrentToken is Token.Id { Value: "switch" })
+            return Parse_SwitchStatement(tokenizer);
+        throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
+    }
+
+    private partial IfStatement Parse_IfStatement(Tokenizer tokenizer)
     {
         var start = tokenizer.CurrentSpan.Start;
         Helper.Expect(tokenizer, new Token.Id("if"));
@@ -50,6 +59,49 @@ sealed partial class Parser
             return new(condition, @then, @else, start..tokenizer.PreviousSpan.End);
         }
         return new(condition, @then, null, start..tokenizer.PreviousSpan.End);
+    }
+
+    private partial SwitchStatement Parse_SwitchStatement(Tokenizer tokenizer)
+    {
+        var seenDefault = false;
+        var start = tokenizer.CurrentSpan.Start;
+        Helper.Expect(tokenizer, new Token.Id("switch"));
+        var condition = Parse_Expression(tokenizer);
+        Helper.Expect(tokenizer, new Token.Symbol("{"));
+        var elements = Helper.ParseAny(ParseElement, tokenizer, t => t.Token is Token.Symbol { Value: "}" });
+        Helper.Expect(tokenizer, new Token.Symbol("}"));
+        var end = tokenizer.PreviousSpan.End;
+        return new(condition, elements, start..end);
+
+        SwitchElement ParseElement(Tokenizer tokenizer)
+        {
+            if (tokenizer.CurrentToken is Token.Id { Value: "case" })
+                if (seenDefault)
+                    throw new ParserExpectedException(tokenizer.CurrentTokenSpan, new Token.Symbol("}"));
+                else
+                    return Parse_SwitchCase(tokenizer);
+            if (tokenizer.CurrentToken is Token.Id { Value: "default" })
+            {
+                seenDefault = true;
+                return Parse_SwitchDefault(tokenizer);
+            }
+
+            throw new ParserUnexpectedException(tokenizer.CurrentTokenSpan);
+        }
+    }
+
+    private partial SwitchCase Parse_SwitchCase(Tokenizer tokenizer)
+    {
+        var start = tokenizer.CurrentSpan.Start;
+        Helper.Expect(tokenizer, new Token.Id("case"));
+        return new(Parse_Expression(tokenizer), Parse_Statement(tokenizer), start..tokenizer.PreviousSpan.End);
+    }
+
+    private partial SwitchDefault Parse_SwitchDefault(Tokenizer tokenizer)
+    {
+        var start = tokenizer.CurrentSpan.Start;
+        Helper.Expect(tokenizer, new Token.Id("default"));
+        return new(Parse_Statement(tokenizer), start..tokenizer.PreviousSpan.End);
     }
 
     private partial BlockStatement Parse_BlockStatement(Tokenizer tokenizer)

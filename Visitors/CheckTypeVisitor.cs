@@ -321,4 +321,14 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
         if (ifStatement.Condition.Type is not ExpressionType.Bool)
             throw new InvalidExpressionType(ifStatement.Condition, ExpressionType.Bool);
     }
+
+    public override void Exit(SwitchStatement switchStatement)
+    {
+        foreach (var elem in switchStatement.Elements)
+        {
+            if (elem is SwitchCase { Expression.Type: var type } @case)
+                if (type != switchStatement.Value.Type)
+                    throw new InvalidExpressionType(@case.Expression, switchStatement.Value.Type);
+        }
+    }
 }

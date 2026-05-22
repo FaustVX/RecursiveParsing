@@ -38,6 +38,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
     private readonly HashSet<string> _functionWrapper = [];
 
     private readonly Stack<int> _ifsSteps = [];
+    private readonly Stack<string> _switchLabels = [];
 
     private int _varCount = 0;
     private int _strCount = 0;
@@ -61,6 +62,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
     {
         Debug.Assert(_varCount == 0);
         Debug.Assert(_ifsSteps is { Count: 0 });
+        Debug.Assert(_switchLabels is { Count: 0 });
         QBEFile.AppendLine($$"""
             %_main_return_value =w loadw $_main_return_value
             ret %_main_return_value
@@ -201,6 +203,41 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
         """);
         if (_ifsSteps.Pop() != 0b00)
             throw new UnreachableException();
+    }
+
+    public override void Enter(SwitchStatement switchStatement)
+    {
+        _switchLabels.Push($"@continue_switch_{switchStatement.GetHashCode() :X}");
+    }
+
+    public override void Visit(SwitchCase switchCase)
+    {
+        Debug.Assert(_varCount >= 2);
+        var (lbl_case, lbl_cont, type) = ($"@case_switch_{switchCase.GetHashCode() :X}", $"@continue_switch_{switchCase.GetHashCode() :X}", TypeToQBE(switchCase.Expression.Type));
+        QBEFile.AppendLine(switchCase.Expression.Type switch
+        {
+            _ when FunctionNameFromSignature(new Token.Symbol("=="), new(ExpressionType.Bool, [switchCase.Expression.Type, switchCase.Expression.Type])) is var name and ['_', ..] => $$"""    %_w{{_varCount - 1}} =w call ${{name}}({{type}} %_{{type}}{{_varCount - 2}}, {{type}} %_{{type}}{{_varCount - 1}})""",
+            _ when FunctionNameFromSignature(new Token.Symbol("=="), new(ExpressionType.Bool, [switchCase.Expression.Type, switchCase.Expression.Type])) is var name => $$"""    %_w{{_varCount - 1}} =w {{name}} %_{{type}}{{_varCount - 2}}, %_{{type}}{{_varCount - 1}}""",
+            _ => throw new UnreachableException(),
+        }).AppendLine($$"""
+            jnz %_w{{_varCount - 1}}, {{lbl_case}}, {{lbl_cont}}
+        {{lbl_case}}
+        """);
+        _varCount -= 1;
+    }
+
+    public override void Exit(SwitchCase switchCase)
+    {
+        QBEFile.AppendLine($$"""
+            jmp {{_switchLabels.Peek()}}
+        @continue_switch_{{switchCase.GetHashCode() :X}}
+        """);
+    }
+
+    public override void Exit(SwitchStatement switchStatement)
+    {
+        QBEFile.AppendLine($$"""{{_switchLabels.Pop()}}""");
+        _varCount -= 1;
     }
 
     static char TypeToQBE(ExpressionTypeUnion type)
