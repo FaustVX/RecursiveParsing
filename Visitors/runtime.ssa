@@ -87,11 +87,19 @@ function l $_strconcat(l %lhs, l %rhs) {
     ret %m
 }
 
-function w $_strcmp(l %lhs, l %rhs) {
+function w $_streq(l %lhs, l %rhs) {
 @start
     %cmp =w call $strcmp(l %lhs, l %rhs)
     %val =w copy 0
     %cmp =w ceqw %cmp, %val
+    ret %cmp
+}
+
+function w $_strne(l %lhs, l %rhs) {
+@start
+    %cmp =w call $strcmp(l %lhs, l %rhs)
+    %val =w copy 0
+    %cmp =w cnew %cmp, %val
     ret %cmp
 }
 
