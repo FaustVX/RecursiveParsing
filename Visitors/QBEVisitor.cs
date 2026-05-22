@@ -37,9 +37,10 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
     private readonly StringBuilder _QBEFunctions = new();
     private readonly HashSet<string> _functionWrapper = [];
 
+    private readonly Stack<int> _ifsSteps = [];
+
     private int _varCount = 0;
     private int _strCount = 0;
-    private int _lblCount = 0;
 
     public override void Enter(Parse.File file)
     {
@@ -59,6 +60,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
     public override void Exit(Parse.File file)
     {
         Debug.Assert(_varCount == 0);
+        Debug.Assert(_ifsSteps is { Count: 0 });
         QBEFile.AppendLine($$"""
             %_main_return_value =w loadw $_main_return_value
             ret %_main_return_value
@@ -161,6 +163,46 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
         _varCount -= 1;
     }
 
+    public override void Enter(IfStatement ifStatement)
+    {
+        _ifsSteps.Push(ifStatement.Else is null ? 0b01 : 0b11);
+    }
+
+    public override void Visit(IfStatement ifStatement)
+    {
+        var step = _ifsSteps.Pop();
+        var (lbl_true, lbl_false, lbl_cont) = ($"@true_if_{ifStatement.GetHashCode() :X}", $"@false_if_{ifStatement.GetHashCode() :X}", $"@continue_if_{ifStatement.GetHashCode() :X}");
+        if ((step & 0b01) != 0) // between condition and then
+        {
+            Debug.Assert(_varCount >= 1);
+            QBEFile.AppendLine($$"""
+                jnz %_w{{_varCount - 1}}, {{lbl_true}}, {{ ((step & 0b10) != 0 ? lbl_false : lbl_cont)}}
+            {{lbl_true}}
+            """);
+            _varCount -= 1;
+            _ifsSteps.Push(step ^ 0b01);
+        }
+        else if ((step & 0b10) != 0) // between then and else
+        {
+            QBEFile.AppendLine($$"""
+                jmp {{lbl_cont}}
+            {{lbl_false}}
+            """);
+            _ifsSteps.Push(step ^ 0b10);
+        }
+        else throw new UnreachableException();
+    }
+
+    public override void Exit(IfStatement ifStatement)
+    {
+        var lbl_cont = $"@continue_if_{ifStatement.GetHashCode() :X}";
+        QBEFile.AppendLine($$"""
+        {{lbl_cont}}
+        """);
+        if (_ifsSteps.Pop() != 0b00)
+            throw new UnreachableException();
+    }
+
     static char TypeToQBE(ExpressionTypeUnion type)
     => type switch
     {
@@ -193,7 +235,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
             case (Token.Symbol { Value: "?" }, Token.Symbol { Value: ":" }):
             {
                 Debug.Assert(_varCount >= 3);
-                var (lbl_true, lbl_false, lbl_cont, type) = ($"@true_{_lblCount++}", $"@false_{_lblCount++}", $"@continue_{_lblCount++}", TypeToQBE(ternaryExpr.Type));
+                var (lbl_true, lbl_false, lbl_cont, type) = ($"@true_conditionnal_{ternaryExpr.GetHashCode() :X}", $"@false_conditionnal_{ternaryExpr.GetHashCode() :X}", $"@continue_conditionnal_{ternaryExpr.GetHashCode() :X}", TypeToQBE(ternaryExpr.Type));
                 QBEFile.AppendLine($$"""
                     jnz %_w{{_varCount - 3}}, {{lbl_true}}, {{lbl_false}}
                 {{lbl_true}}

@@ -33,7 +33,23 @@ sealed partial class Parser
     {
         if (tokenizer.CurrentToken is Token.Symbol { Value: "{" })
             return Parse_BlockStatement(tokenizer);
+        if (tokenizer.CurrentToken is Token.Id { Value: "if" })
+            return Parse_BranchStatement(tokenizer);
         return Parse_ExpressionStatement(tokenizer);
+    }
+
+    private partial IfStatement Parse_BranchStatement(Tokenizer tokenizer)
+    {
+        var start = tokenizer.CurrentSpan.Start;
+        Helper.Expect(tokenizer, new Token.Id("if"));
+        var condition = Parse_Expression(tokenizer);
+        var @then = Parse_Statement(tokenizer);
+        if (Helper.TryConsume(tokenizer, new Token.Id("else")))
+        {
+            var @else = Parse_Statement(tokenizer);
+            return new(condition, @then, @else, start..tokenizer.PreviousSpan.End);
+        }
+        return new(condition, @then, null, start..tokenizer.PreviousSpan.End);
     }
 
     private partial BlockStatement Parse_BlockStatement(Tokenizer tokenizer)

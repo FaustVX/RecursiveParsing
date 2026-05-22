@@ -7,11 +7,13 @@ ternary-expr?(expression left, token-span op-left, expression center, token-span
 call-expr?(expression expression, expression* args) : expression
 statement* : tree-node
 expression-statement?(expression expression) : statement
+if-statement?(expression condition, statement then, statement? else) : statement
 block-statement?(statement* statements) : statement
 file?(statement* statements) : tree-node
 
-statement: statement := block-statement | expression-statement
+statement: statement := block-statement | branch-statement | expression-statement
 block-statement: block-statement := ("{" (statement)* "}")
+branch-statement: if-statement := "if" expression statement ( "else" statement )?
 expression-statement: expression-statement := expression ";"
 expression: expression := conditionnal
 conditionnal: expression := equation ("?" expression ":" conditionnal)?

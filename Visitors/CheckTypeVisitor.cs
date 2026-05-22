@@ -315,4 +315,10 @@ sealed class CheckTypeVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeUn
                 break;
         }
     }
+
+    public override void Exit(IfStatement ifStatement)
+    {
+        if (ifStatement.Condition.Type is not ExpressionType.Bool)
+            throw new InvalidExpressionType(ifStatement.Condition, ExpressionType.Bool);
+    }
 }

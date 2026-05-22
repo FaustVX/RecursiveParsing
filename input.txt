@@ -1,10 +1,12 @@
 {
-    println(time());
-    println(!("1 < 1" != ("1 < "+"1")) ? 12 : 34);
-    println(rand(5, 10));
-    ((rand(10) < 5)?print:println)("--1"+"azerty");
-    println(2*3+4);
-    println(2+3*4);
-    println(false);
-    println(time());
+    if rand(2) == 1
+    {
+        (rand(2) == 1 ? print : println)(rand(2) == 1 ? 12 : 21);
+        println("hi");
+    }
+    else
+    {
+        if rand(2) == 1
+            println(14);
+    }
 }
