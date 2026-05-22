@@ -81,7 +81,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
         var callName = GenerateCall(callExpr.Type, args);
         var length = callExpr.Args.Length + 1;
         Debug.Assert(_varCount >= length);
-        QBEFile.AppendLine($$"""    {{(callExpr.Type is ExpressionType.None ? "" : $"%_w{_varCount - length} =w ")}}call {{callName}}({{string.Join(", ", args.Prepend(ExpressionType.Function).Select(a => $"{TypeToQBE(a)} %_{TypeToQBE(a)}{_varCount - length--}"))}})""");
+        QBEFile.AppendLine($$"""    {{(callExpr.Type is ExpressionType.None ? "" : $"%_{TypeToQBE(callExpr.Type)}{_varCount - length} ={TypeToQBE(callExpr.Type)} ")}}call {{callName}}({{string.Join(", ", args.Prepend(ExpressionType.Function).Select(a => $"{TypeToQBE(a)} %_{TypeToQBE(a)}{_varCount - length--}"))}})""");
         _varCount -= callExpr.Args.Length - (callExpr.Type is ExpressionType.None ? 0 : 1) + 1;
 
         static ImmutableArray<ExpressionTypeUnion> GetTypes(ImmutableArray<Expression> expressions)

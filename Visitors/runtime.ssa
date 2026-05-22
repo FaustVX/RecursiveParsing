@@ -10,7 +10,7 @@ function w $__bool_arginfo(l %info, l %n, l %argstypes, l %size){
 @start
     jnz %n, @true, @false
 @true
-    %pa_int =w copy 1
+    %pa_int =w copy 0
     storew %pa_int, %argstypes
     storew %pa_int, %size
 @false
