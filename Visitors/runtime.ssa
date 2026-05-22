@@ -27,12 +27,24 @@ function w $__bool_printf(l %stream, l %info, l %args){
 @start
     %args =l loadl %args
     %b =w loaduw %args
-    %value =l call $_ternary_l(w %b, l $_true_literal, l $_false_literal)
+    jnz %b, @true_0, @false_1
+@true_0
+    %value =l copy $_true_literal
+    jmp @continue_2
+@false_1
+    %value =l copy $_false_literal
+@continue_2
     %r =w call $fputs(l %value, l %stream)
     %len =w call $strlen(l %value)
     %_1 =w copy -1
     %b =w ceqw %r, %_1
-    %r =w call $_ternary_w(w %b, w -1, w %len)
+    jnz %b, @true_3, @false_4
+@true_3
+    %r =w copy -1
+    jmp @continue_5
+@false_4
+    %r =w copy %len
+@continue_5
     ret %r
 }
 
@@ -81,24 +93,6 @@ function w $_strcmp(l %lhs, l %rhs) {
     %val =w copy 0
     %cmp =w ceqw %cmp, %val
     ret %cmp
-}
-
-function w $_ternary_w(w %test, w %true, w %false) {
-@start
-    jnz %test, @true, @false
-@true
-    ret %true
-@false
-    ret %false
-}
-
-function l $_ternary_l(w %test, l %true, l %false) {
-@start
-    jnz %test, @true, @false
-@true
-    ret %true
-@false
-    ret %false
 }
 
 function $_println_int(w %int) {

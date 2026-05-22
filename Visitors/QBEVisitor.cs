@@ -39,6 +39,7 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
 
     private int _varCount = 0;
     private int _strCount = 0;
+    private int _lblCount = 0;
 
     public override void Enter(Parse.File file)
     {
@@ -184,17 +185,26 @@ public sealed class QBEVisitor(Dictionary<(Token, ImmutableArray<ExpressionTypeU
 
     public override void Exit(TernaryExpr ternaryExpr)
     {
-        Debug.Assert(_varCount >= 3);
-        switch (ternaryExpr.Type, ternaryExpr.OpLeft.Token)
+        switch (ternaryExpr.OpLeft.Token, ternaryExpr.OpRight.Token)
         {
-            case (ExpressionType.Int or ExpressionType.Bool, Token.Symbol { Value: "?" }):
-                QBEFile.AppendLine($$"""    %_w{{_varCount - 3}} =w call $_ternary_w(w %_w{{_varCount - 3}}, w %_w{{_varCount - 2}}, w %_w{{_varCount - 1}})""");
+            case (Token.Symbol { Value: "?" }, Token.Symbol { Value: ":" }):
+            {
+                Debug.Assert(_varCount >= 3);
+                var (lbl_true, lbl_false, lbl_cont, type) = ($"@true_{_lblCount++}", $"@false_{_lblCount++}", $"@continue_{_lblCount++}", TypeToQBE(ternaryExpr.Type));
+                QBEFile.AppendLine($$"""
+                    jnz %_w{{_varCount - 3}}, {{lbl_true}}, {{lbl_false}}
+                {{lbl_true}}
+                    %_{{type}}{{_varCount - 3}} ={{type}} copy %_{{type}}{{_varCount - 2}}
+                    jmp {{lbl_cont}}
+                {{lbl_false}}
+                    %_{{type}}{{_varCount - 3}} ={{type}} copy %_{{type}}{{_varCount - 1}}
+                {{lbl_cont}}
+                """);
+                _varCount -= 2;
                 break;
-            case (ExpressionType.String or ImmutableArray<FunctionSignature> { Length: 1 } or ImmutableArray<FunctionSignature> { Length: 1 }, Token.Symbol { Value: "?" }):
-                QBEFile.AppendLine($$"""    %_l{{_varCount - 3}} =l call $_ternary_l(w %_w{{_varCount - 3}}, l %_l{{_varCount - 2}}, l %_l{{_varCount - 1}})""");
-                break;
+            }
+            default: throw new UnreachableException();
         }
-        _varCount -= 2;
     }
 
     public override void Visit(Primary primary)
