@@ -7,8 +7,7 @@ using RecursiveParsing.Visitors;
 // https://www.youtube.com/watch?v=SToUyjAsaFk
 // http://slebok.github.io/zoo/
 
-var input = (args is [var p,..] && new FileInfo(p) is { Exists: true, Extension: ".txt", FullName: var f }) ? System.IO.File.ReadAllText(f) : throw new Exception();
-var name = Path.GetFileNameWithoutExtension(f);
+var input = (args is [var p,.., "-o", var o] && (new FileInfo(p), new FileInfo(o)) is ({ Exists: true, Extension: ".txt", FullName: var f }, { Extension: ".ssa", FullName: var name})) ? System.IO.File.ReadAllText(f) : throw new Exception();
 TreeNode? ast = default;
 try
 {
@@ -47,7 +46,7 @@ try
     ast.Accept(new CheckTypeVisitor(functions));
     var qbe = new QBEVisitor(functions);
     ast.Accept(qbe);
-    System.IO.File.WriteAllBytes(@$"obj/{name}.ssa", Encoding.ASCII.GetBytes(qbe.QBEFile.ToString().Replace("\r\n", "\n")));
+    System.IO.File.WriteAllBytes(name, Encoding.ASCII.GetBytes(qbe.QBEFile.ToString().Replace("\r\n", "\n")));
 }
 catch (EBNFException ex)
 {
